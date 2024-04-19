@@ -16,7 +16,9 @@ class KNN:
         return np.array(predictions)
 
     def _predict(self, x):
-        distances = [np.linalg.norm(x - x_train) for x_train in self.X_train]
+        distances = [np.linalg.norm(x - x_train) 
+                     for x_train in self.X_train 
+                     if not np.any(x_train == 0)]  # 排除任何特徵值為 0 的樣本
         nearest_indices = np.argsort(distances)[:self.k]
         nearest_labels = [self.y_train[i] for i in nearest_indices]
         most_common = Counter(nearest_labels).most_common(1)
@@ -29,7 +31,7 @@ def load_data(filename):
     return X, y
 
 # 讀取資料
-X, y = load_data('A/train_data.csv')  # 請替換成你的CSV檔案名稱
+X, y = load_data('Data/A/train_data.csv')  # 請替換成你的CSV檔案名稱
 
 # 初始化並訓練KNN模型
 knn = KNN(k=3)
@@ -37,9 +39,7 @@ knn.fit(X, y)
 
 # 預測
 # 這裡我假設你有另一組測試數據，你可以根據需要替換或加入你的測試數據
-X_test = np.array([[6, 148, 72, 35, 0, 33.6, 0.627, 50],
-                   [1, 85, 66, 29, 0, 26.6, 0.351, 31],
-                   [8, 183, 64, 0, 0, 23.3, 0.672, 32]])
+X_test, _ = load_data('Data/A/test_data.csv')
 
 predictions = knn.predict(X_test)
-print("Predictions:", predictions)
+#print("Predictions:", predictions)
