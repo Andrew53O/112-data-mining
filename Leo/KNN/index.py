@@ -22,20 +22,6 @@ class KNN:
         most_common = Counter(nearest_labels).most_common(1)
         return most_common[0][0]
 
-
-#def read_csv(file_path):
-    #data = []
-    #with open(file_path, 'r') as file:
-        #csv_reader = csv.reader(file)
-        #for row in csv_reader:
-            #data.append(row)
-    #return data
-
-#file_path = "A/test_data.csv"
-#csv_data = read_csv(file_path)
-
-#print(csv_data)
-
 def load_data(filename):
     data = np.genfromtxt(filename, delimiter=',', skip_header=1)
     X = data[:, :-1]  # 所有特徵
