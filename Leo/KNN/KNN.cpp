@@ -6,13 +6,13 @@
 #include<bits/stdc++.h>
 using namespace std;
 // 懷孕次數、葡萄糖濃度、舒張壓、三頭肌皮皺厚度、胰島素濃度
-float Pregnancies = 2, Glucose = 1, BloodPressure = 1, SkinThickness = 5, Insulin = 1;
+float Pregnancies = 1, Glucose = 5, BloodPressure = 1, SkinThickness = 1, Insulin = 1;
 // BMI、糖尿病函數、年齡
-float BMI = 1, DiabetesPedigreeFunction = 1, Age = 1;
+float BMI = 2, DiabetesPedigreeFunction = 10, Age = 1;
 
 float Proportion[8] = {Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age};
 
-int KNN_Range = 9;
+int KNN_Range = 11;
 
 string train_file = "A/train_data.csv", test_file = "A/test_data.csv";
 
@@ -72,14 +72,17 @@ bool test(int N) {
 }
 
 void KNN(int N) {
+    int num = 0;
     in.open(test_file); // 測試資料
     in >> str; //temporary
     while(in >> str) {
         //cout << test(N) << endl;
         test(N);
+        num++;
         //system("pause");
     }
     in.close();
+    cout << "正確率: " << Correct*100.0/num << "%\n";
 }
 
 void train_data() {
@@ -102,14 +105,9 @@ void train_data() {
     }
 }
 
-void Correct_rate() {
-    cout << "正確率: " << (n-Correct)*100.0/n << "%\n";
-}
-
 int main()
 {
     train_data();
     KNN(KNN_Range);
-    Correct_rate();
     return 0;
 }
