@@ -1,11 +1,18 @@
+/*
+ * Program Name: KNN
+ * Completion Date: 2024-04-22
+ * Author: Leo
+ */
 #include<bits/stdc++.h>
 using namespace std;
 // 懷孕次數、葡萄糖濃度、舒張壓、三頭肌皮皺厚度、胰島素濃度
-float Pregnancies = 0.5, Glucose = 0.1, BloodPressure = 0.1, SkinThickness = 0.1, Insulin = 0.1;
+float Pregnancies = 2, Glucose = 1, BloodPressure = 1, SkinThickness = 5, Insulin = 1;
 // BMI、糖尿病函數、年齡
-float BMI = 0.5, DiabetesPedigreeFunction = 0.1, Age = 0.1;
+float BMI = 1, DiabetesPedigreeFunction = 1, Age = 1;
 
 float Proportion[8] = {Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age};
+
+int KNN_Range = 9;
 
 string train_file = "A/train_data.csv", test_file = "A/test_data.csv";
 
@@ -17,7 +24,7 @@ char c;
 int n = 0, Correct = 0;
 
 struct Distance{
-    float value;
+    float value = 0;
     bool Outcome = 0;
 };
 
@@ -26,24 +33,29 @@ bool cmp(Distance a, Distance b) {
 }
 
 bool test(int N) {
-    int input[9], Outcome = 0;
+    float input[9];
+    int Outcome = 0;
     Distance d[n];
     for(int i = 0; i < n; i++) {
         d[i].Outcome = data[i][8];
     }
-    ss << str;
+    ss << str << ',';
     for(int i = 0; i < 9; i++) {
         ss >> input[i];
         if(ss >> c);
     }
     for(int i = 0; i < n; i++) {
+        float total = 0;
         for(int j = 0; j < 8; j++) {
             if(input[j] == 0 || data[i][j] == 0)
                 continue;
             else {
                 d[i].value += pow(input[j] - data[i][j], 2) * Proportion[j];
+                Proportion[j];
+                total += Proportion[j];
             }
         }
+        d[i].value = sqrt(d[i].value/total);
     }
     sort(d, d+n, cmp);
     for(int i = 0; i < N; i++) {
@@ -63,7 +75,9 @@ void KNN(int N) {
     in.open(test_file); // 測試資料
     in >> str; //temporary
     while(in >> str) {
-        cout << test(N) << endl;
+        //cout << test(N) << endl;
+        test(N);
+        //system("pause");
     }
     in.close();
 }
@@ -89,13 +103,13 @@ void train_data() {
 }
 
 void Correct_rate() {
-    cout << "正確率: " << Correct*100.0/n << "%\n";
+    cout << "正確率: " << (n-Correct)*100.0/n << "%\n";
 }
 
 int main()
 {
     train_data();
-    KNN(3);
+    KNN(KNN_Range);
     Correct_rate();
     return 0;
 }
