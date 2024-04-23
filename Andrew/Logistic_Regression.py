@@ -1,10 +1,10 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 # Load data from CSV file
-Train_data = pd.read_csv('Data/B/train_data.csv')
-Test_data = pd.read_csv('Data/B/test_data.csv')
+Train_data = pd.read_csv('Data/A/train_data.csv')
+Test_data = pd.read_csv('Data/A/test_data.csv')
 
 # Split to parameters and outcome data 
 X_train = Train_data.iloc[:, :7].values.T # Transpose data
@@ -13,7 +13,7 @@ X_test = Test_data.iloc[:, :7].values.T
 Y_test = Test_data.iloc[:, 8].values.reshape(1, X_test.shape[1])
 
 # Initialize parameters
-iterate_count = 10000
+iterate_count = 100000
 lrate = 0.00027
 
 # Sigmoid function
@@ -53,7 +53,7 @@ def Logistic_Regression(X, Y, lrate, iterate_count):
 
 Weight, Bias, cost_all = Logistic_Regression(X_train, Y_train, lrate = lrate, iterate_count = iterate_count)
 
-# Plotting the cost function
+# Drawing the cost function
 plt.plot(np.arange(iterate_count), cost_all)
 plt.show()
 
@@ -63,7 +63,7 @@ def accuracy(X, Actual_value, Weight, Bias):
     Predicted_value = sigmoid(Z)
     Predicted_value = np.array(Predicted_value > 0.5, dtype='int64') # Change to 0 or 1
         
-    acc = (1 - np.sum(np.absolute(Predicted_value - Actual_value))/Actual_value.shape[1])*100
+    acc = (1 - np.sum(np.absolute(Predicted_value - Actual_value)) / Actual_value.shape[1]) * 100
     
     print("Accuracy: ", round(acc, 2), "%")
     
