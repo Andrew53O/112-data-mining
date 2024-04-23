@@ -40,20 +40,19 @@ def Logistic_Regression(X, Y, lrate, iterate_count):
         cost = -(1/m)*np.sum(Y * np.log(A + 1e-9) + (1-Y) * np.log(1 - A + 1e-9))
         
         # Gradient Descent
-        dWeight = (1/m) * np.dot(A-Y, X.T)
+        dWeight = (1/m) * np.dot(A - Y, X.T)
         dBias = (1/m) * np.sum(A - Y)
         
         Weight = Weight - lrate * dWeight.T
         Bias = Bias - lrate * dBias
         
-        # Keeping track of our cost function value
         cost_all.append(cost)
         
     return Weight, Bias, cost_all
 
 Weight, Bias, cost_all = Logistic_Regression(X_train, Y_train, lrate = lrate, iterate_count = iterate_count)
 
-# Drawing the cost function
+# Draw the cost function
 plt.plot(np.arange(iterate_count), cost_all)
 plt.show()
 
@@ -65,6 +64,6 @@ def accuracy(X, Actual_value, Weight, Bias):
         
     acc = (1 - np.sum(np.absolute(Predicted_value - Actual_value)) / Actual_value.shape[1]) * 100
     
-    print("Accuracy: ", round(acc, 2), "%")
+    print("Accuracy: ", round(acc, 2), "%") 
     
 accuracy(X_test, Y_test, Weight, Bias)
