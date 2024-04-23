@@ -12,7 +12,9 @@ Y_train = Train_data.iloc[:, 8].values.reshape(1, X_train.shape[1]) # Reshape da
 X_test = Test_data.iloc[:, :7].values.T
 Y_test = Test_data.iloc[:, 8].values.reshape(1, X_test.shape[1])
 
-
+# Initialize parameters
+iterate_count = 100000
+lrate = 0.00027
 
 # Sigmoid function
 def sigmoid(x):
