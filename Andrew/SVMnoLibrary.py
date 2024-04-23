@@ -54,8 +54,13 @@ class SVM():
     return result  
 
 # Load data from CSV file
-Train_data = pd.read_csv('Data/B/train_data.csv')
-Test_data = pd.read_csv('Data/B/test_data.csv')
+Train_data = pd.read_csv('Data/A/train_data.csv')
+Test_data = pd.read_csv('Data/A/test_data.csv')
+
+# Initialize parameters
+lrate = 0.01
+iterate_count = 1000
+lambdaa = 0.01
 
 # Split to parameters and outcome data 
 X_train = Train_data.iloc[:, :7]
@@ -69,19 +74,19 @@ X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
 # SVM model
-lrate = 0.01; iterate_count = 1000; lambdaa = 0.01
+
 model = SVM(lrate = lrate, iterate_count = iterate_count, lambdaa = lambdaa)
 
 # Train the model with training data
 model.fit(X_train, Y_train)
 
 # Check the Accuracy on Training and Testing data
-X_train_pred = model.predict(X_train)
-train_acc = accuracy_score(Y_train, X_train_pred)
+# X_train_pred = model.predict(X_train)
+# train_acc = accuracy_score(Y_train, X_train_pred)
 
-print("Training Accuracy: ", round(train_acc * 100, 2), "%")
+# print("Training Accuracy: ", round(train_acc * 100, 2), "%")
 
 X_test = model.predict(X_test)
 test_acc = accuracy_score(Y_test, X_test)
 
-print("Testing Accuracy: ", round(test_acc * 100, 2), "%")
+print("Testing Accuracy: ", round(test_acc * 100, 3), "%")

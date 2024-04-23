@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load data from CSV file
-Train_data = pd.read_csv('Data/A/train_data.csv')
-Test_data = pd.read_csv('Data/A/test_data.csv')
+Train_data = pd.read_csv('Data/B/train_data.csv')
+Test_data = pd.read_csv('Data/B/test_data.csv')
 
 # Split to parameters and outcome data 
 X_train = Train_data.iloc[:, :7].values.T # Transpose data
@@ -12,9 +12,6 @@ Y_train = Train_data.iloc[:, 8].values.reshape(1, X_train.shape[1]) # Reshape da
 X_test = Test_data.iloc[:, :7].values.T
 Y_test = Test_data.iloc[:, 8].values.reshape(1, X_test.shape[1])
 
-# Initialize parameters
-iterate_count = 100000
-lrate = 0.00027
 
 
 # Sigmoid function
@@ -62,7 +59,7 @@ def accuracy(X, Actual_value, Weight, Bias):
         
     acc = (1 - np.sum(np.absolute(Predicted_value - Actual_value)) / Actual_value.shape[1]) * 100
     
-    print("Accuracy: ", round(acc, 2), "%") 
+    print("Accuracy: ", round(acc, 3), "%") 
 
 
 Weight, Bias, cost_all = Logistic_Regression(X_train, Y_train, lrate = lrate, iterate_count = iterate_count)
