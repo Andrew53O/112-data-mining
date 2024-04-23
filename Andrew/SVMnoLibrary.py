@@ -74,7 +74,6 @@ X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
 # SVM model
-
 model = SVM(lrate = lrate, iterate_count = iterate_count, lambdaa = lambdaa)
 
 # Train the model with training data
