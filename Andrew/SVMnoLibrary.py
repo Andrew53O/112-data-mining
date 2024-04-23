@@ -33,14 +33,14 @@ class SVM():
     outcome = np.array([1 if y > 0 else -1 for y in self.Y])
     
     # Slope dweight and dbias
-    for index, x_i in enumerate(self.X):
+    for i, row_data in enumerate(self.X):
       # check the condition using hinge loss function
-      if (outcome[index] * (np.dot(x_i, self.weight) - self.bias) >= 1):
+      if (outcome[i] * (np.dot(row_data, self.weight) - self.bias) >= 1):
         dweight = 2 * self.lambdaa * self.weight
         dbias = 0
       else:
-        dweight = 2 * self.lambdaa * self.weight - np.dot(x_i, outcome[index])
-        dbias = outcome[index]
+        dweight = 2 * self.lambdaa * self.weight - np.dot(row_data, outcome[i])
+        dbias = outcome[i]
     
       self.weight -= self.lrate * dweight
       self.bias -= self.lrate * dbias
@@ -54,8 +54,8 @@ class SVM():
     return result  
 
 # Load data from CSV file
-Train_data = pd.read_csv('Data/A/train_data.csv')
-Test_data = pd.read_csv('Data/A/test_data.csv')
+Train_data = pd.read_csv('Data/B/train_data.csv')
+Test_data = pd.read_csv('Data/B/test_data.csv')
 
 # Initialize parameters
 lrate = 0.01
