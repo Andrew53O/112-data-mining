@@ -16,12 +16,18 @@ Y_test = Test_data.iloc[:, 8].values.reshape(1, X_test.shape[1])
 iterate_count = 100000
 lrate = 0.00027
 
+
 # Sigmoid function
 def sigmoid(x):
     if np.any(x < -100): # if x is too negative 
         return np.where(x < -100, 0, 1 / (1 + np.exp(-x)))
     else:
         return 1 / (1 + np.exp(-x))
+
+# Calculate sigmoid or probabilistic predictions between 0 and 1
+def calc_sigmoid(X, Weight, Bias):
+    res = np.dot(Weight.T, X) + Bias
+    return sigmoid(res)
 
 def Logistic_Regression(X, Y, lrate, iterate_count):
     m = X_train.shape[1]
@@ -33,8 +39,7 @@ def Logistic_Regression(X, Y, lrate, iterate_count):
     
     for _ in range(iterate_count):
         # Calculate the sigmoid
-        Z = np.dot(Weight.T, X) + Bias
-        A = sigmoid(Z)
+        A = calc_sigmoid(X, Weight, Bias)
         
         # Cost function -> Error representation
         cost = -(1/m)*np.sum(Y * np.log(A + 1e-9) + (1-Y) * np.log(1 - A + 1e-9))
@@ -50,20 +55,22 @@ def Logistic_Regression(X, Y, lrate, iterate_count):
         
     return Weight, Bias, cost_all
 
-Weight, Bias, cost_all = Logistic_Regression(X_train, Y_train, lrate = lrate, iterate_count = iterate_count)
-
-# Draw the cost function
-plt.plot(np.arange(iterate_count), cost_all)
-plt.show()
-
 def accuracy(X, Actual_value, Weight, Bias):
     # Calculate the sigmoid
-    Z = np.dot(Weight.T, X) + Bias
-    Predicted_value = sigmoid(Z)
+    Predicted_value = calc_sigmoid(X, Weight, Bias)
     Predicted_value = np.array(Predicted_value > 0.5, dtype='int64') # Change to 0 or 1
         
     acc = (1 - np.sum(np.absolute(Predicted_value - Actual_value)) / Actual_value.shape[1]) * 100
     
     print("Accuracy: ", round(acc, 2), "%") 
-    
+
+
+Weight, Bias, cost_all = Logistic_Regression(X_train, Y_train, lrate = lrate, iterate_count = iterate_count)
+
+# Draw the cost function
+plt.figure(num="Cost Function", figsize=(10, 6))
+plt.plot(np.arange(iterate_count), cost_all)
+plt.title("Cost Function Plot")
+plt.show()
+
 accuracy(X_test, Y_test, Weight, Bias)
