@@ -48,10 +48,18 @@ class SVM():
   # Predict the label for a given input value
   def predict(self, X):
     output = np.dot(X, self.weight) - self.bias
-    predicted_labels = np.sign(output)
+    predicted_labels = np.array([helper(x) for x in output])
     result = np.where(predicted_labels <= -1, 0, 1)
 
     return result  
+
+def helper(x):
+  if x < 0:
+    return -1
+  elif x > 0:
+    return 1
+  else:
+    return 0
 
 # Load data from CSV file
 Train_data = pd.read_csv('Data/B/train_data.csv')
