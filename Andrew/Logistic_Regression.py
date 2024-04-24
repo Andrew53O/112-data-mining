@@ -16,60 +16,68 @@ Y_test = Test_data.iloc[:, 8].values.reshape(1, X_test.shape[1])
 iterate_count = 100000
 lrate = 0.00027
 
-# Sigmoid function
-def sigmoid(x):
+class Logistic_Regression():
+    # Initialize the parameters
+    def __init__(self, lrate, iterate_count):
+        self.lrate = lrate
+        self.iterate_count = iterate_count
+    
+    # Train the model 
+    def fit(self, X, Y):
+        # Init some variable
+        self.X = X
+        self.Y = Y
+        self.m = X_train.shape[1]
+        self.n = X_train.shape[0]
+        
+        self.Weight = np.zeros((self.n, 1)) # numpy array filled with zero
+        self.Bias = 0
+        
+        for _ in range(iterate_count):
+            # Calculate the sigmoid
+            res_sigmoid = calc_sigmoid(self.X, self.Weight, self.Bias)
+            
+            # Cost function -> Error representation
+            cost = -(1/self.m)*np.sum(self.Y * np.log(res_sigmoid + 1e-9) + (1-Y) * np.log(1 - res_sigmoid + 1e-9))
+            
+            # Gradient Descent
+            dWeight = (1/self.m) * np.dot(res_sigmoid - self.Y, self.X.T)
+            dBias = (1/self.m) * np.sum(res_sigmoid - self.Y)
+            
+            self.Weight -= lrate * dWeight.T
+            self.Bias -= lrate * dBias
+            
+    
+    def accuracy(self, test_data, Actual_value):
+        # Calculate the sigmoid with our weight andd bias
+        Predicted_value = calc_sigmoid(test_data, self.Weight, self.Bias)
+        Predicted_value = np.array(Predicted_value > 0.5, dtype='int64') # Change to 0 or 1
+            
+        acc = (1 - np.sum(np.absolute(Predicted_value - Actual_value)) / Actual_value.shape[1])
+        
+        return acc
+        
+       
+def helper_sigmoid(x):
     if np.any(x < -100): # if x is too negative 
         return np.where(x < -100, 0, 1 / (1 + np.exp(-x)))
     else:
         return 1 / (1 + np.exp(-x))
-
+        
 # Calculate sigmoid or probabilistic predictions between 0 and 1
 def calc_sigmoid(X, Weight, Bias):
     res = np.dot(Weight.T, X) + Bias
-    return sigmoid(res)
+    return helper_sigmoid(res)
 
-def Logistic_Regression(X, Y, lrate, iterate_count):
-    m = X_train.shape[1]
-    n = X_train.shape[0]
-    
-    Weight = np.zeros((n,1)) # numpy array filled with zero
-    Bias = 0
-    cost_all = []
-    
-    for _ in range(iterate_count):
-        # Calculate the sigmoid
-        A = calc_sigmoid(X, Weight, Bias)
-        
-        # Cost function -> Error representation
-        cost = -(1/m)*np.sum(Y * np.log(A + 1e-9) + (1-Y) * np.log(1 - A + 1e-9))
-        
-        # Gradient Descent
-        dWeight = (1/m) * np.dot(A - Y, X.T)
-        dBias = (1/m) * np.sum(A - Y)
-        
-        Weight = Weight - lrate * dWeight.T
-        Bias = Bias - lrate * dBias
-        
-        cost_all.append(cost)
-        
-    return Weight, Bias, cost_all
+model = Logistic_Regression(lrate, iterate_count)
+model.fit(X_train, Y_train)
+test_acc = model.accuracy(X_test, Y_test)
 
-def accuracy(X, Actual_value, Weight, Bias):
-    # Calculate the sigmoid
-    Predicted_value = calc_sigmoid(X, Weight, Bias)
-    Predicted_value = np.array(Predicted_value > 0.5, dtype='int64') # Change to 0 or 1
-        
-    acc = (1 - np.sum(np.absolute(Predicted_value - Actual_value)) / Actual_value.shape[1]) * 100
-    
-    print("Accuracy: ", round(acc, 3), "%") 
-
-
-Weight, Bias, cost_all = Logistic_Regression(X_train, Y_train, lrate = lrate, iterate_count = iterate_count)
+print("Accuracy: ", round(test_acc * 100, 3), "%")
 
 # Draw the cost function
-plt.figure(num="Cost Function", figsize=(10, 6))
-plt.plot(np.arange(iterate_count), cost_all)
-plt.title("Cost Function Plot")
-plt.show()
+# plt.figure(num="Cost Function", figsize=(10, 6))
+# plt.plot(np.arange(iterate_count), cost_all)
+# plt.title("Cost Function Plot")
+# plt.show()
 
-accuracy(X_test, Y_test, Weight, Bias)
