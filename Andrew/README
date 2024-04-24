@@ -13,4 +13,12 @@ References:
 - Playlist -> https://youtube.com/playlist?list=PLfFghEzKVmjvzS4DILijsdQk27Ew7xIPu&si=pI3raibhDKODcoJ4
 
 
+報告 稿子
 
+Andrew: 
+這邊有比較特別的是， 有的演算法會用到Data Standardization 意思是 標準化， 資料被訓練前有進行處理， 結果會比較好， 那我們一個一個Demo 看看
+
+Standardization -> 將轉數據，使分佈的平均值為 0，標準差為 1。
+
+
+使用 sklearn 的 StandardScaler
