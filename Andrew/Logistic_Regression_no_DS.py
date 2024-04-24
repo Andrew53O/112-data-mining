@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 # Load data from CSV file
 Train_data = pd.read_csv('Data/B/train_data.csv')

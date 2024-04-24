@@ -25,9 +25,13 @@ class SVM():
     # Using Gradient Descent
     for _ in range(self.iterate_count):
       outcome = np.array([1 if y > 0 else -1 for y in self.Y])
-    
+
       # Slope dweight and dbias
       for i, row_data in enumerate(self.X):
+        # print("self.Weight:", self.Weight)
+        # print("Type of self.Weight:", type(self.Weight))
+        # print("row_data:", row_data)
+        # print("Type of row_data:", type(row_data))
         # check the condition using hinge loss function
         if (outcome[i] * (np.dot(row_data, self.Weight) - self.Bias) >= 1):
           dweight = 2 * self.lambdaa * self.Weight
@@ -56,8 +60,8 @@ def helper(x):
     return 0
 
 # Load data from CSV file
-Train_data = pd.read_csv('Data/A/train_data.csv')
-Test_data = pd.read_csv('Data/A/test_data.csv')
+Train_data = pd.read_csv('Data/B/train_data.csv')
+Test_data = pd.read_csv('Data/B/test_data.csv')
 
 # Initialize parameters
 lrate = 0.01
@@ -65,15 +69,10 @@ iterate_count = 1000
 lambdaa = 0.01
 
 # Split to parameters and outcome data 
-X_train = Train_data.iloc[:, :7]
+X_train = Train_data.iloc[:, :7].values # to return numpy array
 Y_train = Train_data.iloc[:, 8]
-X_test = Test_data.iloc[:, :7]
+X_test = Test_data.iloc[:, :7].values # to return numpy array
 Y_test = Test_data.iloc[:, 8]
-
-# Data Standardization
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
 
 # SVM model
 model = SVM(lrate = lrate, iterate_count = iterate_count, lambdaa = lambdaa)
