@@ -48,8 +48,8 @@ class SVM():
   # Predict the label for a given input value
   def predict(self, X):
     output = np.dot(X, self.weight) - self.bias
-    predicted_labels = np.array([helper(x) for x in output])
-    result = np.where(predicted_labels <= -1, 0, 1)
+    predicted = np.array([helper(x) for x in output])
+    result = np.where(predicted <= -1, 0, 1)
 
     return result  
 
