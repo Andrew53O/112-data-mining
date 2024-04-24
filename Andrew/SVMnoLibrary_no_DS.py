@@ -22,21 +22,17 @@ class SVM():
     self.Weight = np.zeros(self.n) # numpy array filled with zero
     self.Bias = 0
 
-    # Using Gradient Descent
+    # Gradient Descent iteration
     for _ in range(self.iterate_count):
-      outcome = np.array([1 if y > 0 else -1 for y in self.Y])
-
-      # Slope dweight and dbias
+      outcome = np.array([1 if y > 0 else -1 for y in self.Y]) # make it for binary classification
+    
       for i, row_data in enumerate(self.X):
-        # print("self.Weight:", self.Weight)
-        # print("Type of self.Weight:", type(self.Weight))
-        # print("row_data:", row_data)
-        # print("Type of row_data:", type(row_data))
-        # check the condition using hinge loss function
+        # check if data is outside the margin
         if (outcome[i] * (np.dot(row_data, self.Weight) - self.Bias) >= 1):
           dweight = 2 * self.lambdaa * self.Weight
           dbias = 0
         else:
+          # if it's inside the margin, increase the margin
           dweight = 2 * self.lambdaa * self.Weight - np.dot(row_data, outcome[i])
           dbias = outcome[i]
       
