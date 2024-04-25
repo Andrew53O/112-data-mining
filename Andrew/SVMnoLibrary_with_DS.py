@@ -19,31 +19,36 @@ class SVM():
     self.m = X.shape[0] # rows
     self.n = X.shape[1] # columns
 
-    self.Weight = np.zeros(self.n) # numpy array filled with zero
-    self.Bias = 0
+    weight = np.zeros(self.n) # numpy array filled with zero
+    bias = 0
 
     # Gradient Descent iteration
     for _ in range(self.iterate_count):
       outcome = np.array([1 if y > 0 else -1 for y in self.Y]) # make it for binary classification
     
       for i, row_data in enumerate(self.X):
+        dweight = 0
+        dbias = 0
         # check if data is outside the margin
-        if (outcome[i] * (np.dot(row_data, self.Weight) - self.Bias) >= 1):
-          dweight = 2 * self.lambdaa * self.Weight
-          dbias = 0
+        if (outcome[i] * (np.dot(row_data, weight) - bias) >= 1):
+          dweight = 2 * self.lambdaa * weight
         else:
           # if it's inside the margin, increase the margin
-          dweight = 2 * self.lambdaa * self.Weight - np.dot(row_data, outcome[i])
+          dweight = 2 * self.lambdaa * weight - np.dot(row_data, outcome[i])
           dbias = outcome[i]
       
-        self.Weight -= self.lrate * dweight
-        self.Bias -= self.lrate * dbias
+        weight -= self.lrate * dweight
+        bias -= self.lrate * dbias   
+    
+    # Lastly change the weight and the bias
+    self.Weight = weight
+    self.Bias = bias
 
   # Predict the label for a given input value
   def predict(self, test_data):
     output = np.dot(test_data, self.Weight) - self.Bias
     predicted = np.array([helper(x) for x in output])
-    result = np.where(predicted <= -1, 0, 1)
+    result = np.where(predicted > -1, 1, 0)
 
     return result  
 

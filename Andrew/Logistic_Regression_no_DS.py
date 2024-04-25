@@ -29,22 +29,23 @@ class Logistic_Regression():
         self.m = X_train.shape[1]
         self.n = X_train.shape[0]
         
-        self.Weight = np.zeros((self.n, 1)) # numpy array filled with zero
-        self.Bias = 0
+        weight = np.zeros((self.n, 1)) # numpy array filled with zero
+        bias = 0
         
         for _ in range(iterate_count):
             # Calculate the sigmoid
-            res_sigmoid = calc_sigmoid(self.X, self.Weight, self.Bias)
+            res_sigmoid = calc_sigmoid(self.X, weight, self.bias)
             
-            # Cost function -> Error representation
-            cost = -(1/self.m) * np.sum(self.Y * np.log(res_sigmoid + 1e-9) + (1-Y) * np.log(1 - res_sigmoid + 1e-9))
-            
-            # Gradient Descent
+            # adjusting the weight and bias using cost function + gradient descent
             dWeight = (1/self.m) * np.dot(res_sigmoid - self.Y, self.X.T)
             dBias = (1/self.m) * np.sum(res_sigmoid - self.Y)
             
-            self.Weight -= lrate * dWeight.T
-            self.Bias -= lrate * dBias
+            weight -= lrate * dWeight.T
+            bias -= lrate * dBias
+        
+        # Lastly change the weight and the bias 
+        self.weight = weight
+        self.bias = bias
             
     
     def accuracy(self, test_data, Actual_value):
@@ -61,7 +62,7 @@ def helper_sigmoid(x):
     if np.any(x < -100): # if x is too negative 
         return np.where(x < -100, 0, 1 / (1 + np.exp(-x)))
     else:
-        return 1 / (1 + np.exp(-x))
+        return 1 / (1 + np.exp(-x)) # sigmoid function
         
 # Calculate sigmoid or probabilistic predictions between 0 and 1
 def calc_sigmoid(X, Weight, Bias):
