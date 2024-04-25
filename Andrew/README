@@ -22,3 +22,5 @@ Standardization -> 將轉數據，使分佈的平均值為 0，標準差為 1。
 
 
 使用 sklearn 的 StandardScaler
+
+

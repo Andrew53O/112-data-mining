@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-#import matplotlib.pyplot as plt
 
 # Load data from CSV file
 Train_data = pd.read_csv('Data/B/train_data.csv')
@@ -14,7 +13,7 @@ Y_test = Test_data.iloc[:, 8].values.reshape(1, X_test.shape[1])
 
 # Initialize parameters
 iterate_count = 100000
-lrate = 0.00027
+lrate = 0.00027 # manually find the best learning rate 
 
 class Logistic_Regression():
     # Initialize the parameters
@@ -38,7 +37,7 @@ class Logistic_Regression():
             res_sigmoid = calc_sigmoid(self.X, self.Weight, self.Bias)
             
             # Cost function -> Error representation
-            cost = -(1/self.m)*np.sum(self.Y * np.log(res_sigmoid + 1e-9) + (1-Y) * np.log(1 - res_sigmoid + 1e-9))
+            cost = -(1/self.m) * np.sum(self.Y * np.log(res_sigmoid + 1e-9) + (1-Y) * np.log(1 - res_sigmoid + 1e-9))
             
             # Gradient Descent
             dWeight = (1/self.m) * np.dot(res_sigmoid - self.Y, self.X.T)
@@ -74,10 +73,4 @@ model.fit(X_train, Y_train)
 test_acc = model.accuracy(X_test, Y_test)
 
 print("Accuracy: ", round(test_acc * 100, 3), "%")
-
-# Draw the cost function
-# plt.figure(num="Cost Function", figsize=(10, 6))
-# plt.plot(np.arange(iterate_count), cost_all)
-# plt.title("Cost Function Plot")
-# plt.show()
 
