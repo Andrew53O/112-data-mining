@@ -62,7 +62,7 @@ class Logistic_Regression():
     
     def accuracy(self, test_data, Actual_value):
         # Calculate the sigmoid with our weight andd bias
-        Predicted_value = calc_sigmoid(test_data, self.Weight, self.Bias)
+        Predicted_value = calc_sigmoid(test_data, self.weight, self.bias)
         Predicted_value = np.array(Predicted_value > 0.5, dtype='int64') # Change to 0 or 1
             
         acc = (1 - np.sum(np.absolute(Predicted_value - Actual_value)) / Actual_value.shape[1])
