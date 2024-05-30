@@ -1,0 +1,11 @@
+1. K-means
+2. DBSCAN
+3. Hierarchical Clustering
+4. Gaussian Mixture Models（GMM）
+5. Mean Shift
+6. OPTICS (DBSCAN 的延伸)
+7. Spectral Clustering
+8. Affinity Propagation
+9. Birch（Balanced Iterative Reducing and Clustering using Hierarchies）
+10. Agglomerative Clustering
+11. Divisive Clustering
