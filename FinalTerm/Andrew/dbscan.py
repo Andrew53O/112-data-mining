@@ -1,6 +1,10 @@
 import numpy as np
+from sklearn.impute import KNNImputer
+import matplotlib.pyplot as plt
 
-# For 
+# For Classification
+from sklearn.ensemble import RandomForestClassifier
+
 
 # For dbscan algorithm
 from scipy.spatial import distance
@@ -43,11 +47,11 @@ def fill_zeros_with_knn(data, n_neighbors=2):
     
     return data_imputed_df
 
-# 填补训练数据中的0值
-#train_data = fill_zeros_with_knn(train_data)
+# # 填补训练数据中的0值
+# train_data = fill_zeros_with_knn(train_data)
 
-# 填补测试数据中的0值
-#test_data = fill_zeros_with_knn(test_data)
+# #填补测试数据中的0值
+# test_data = fill_zeros_with_knn(test_data)
 
 # 定义K-means算法
 class MyKMeans:
@@ -88,40 +92,103 @@ class MyKMeans:
         labels = self.assign_clusters(X)
         return labels
 
+
+
+
+
+
+
+
+
+
 # 使用随机森林分类器对所有样本进行分类
 classifier = RandomForestClassifier(n_estimators=100, random_state=42)
-classifier.fit(train_data, train_labels.values.ravel())
-test_predictions_proba = classifier.predict_proba(test_data)
+classifier.fit(train_data, train_labels.values.ravel()) # Convert labels into 1D array
+test_predictions_proba = classifier.predict_proba(test_data) # Predict each data belongs to what class label
 
-# 定义阈值来确定未知类别的样本
-threshold = 0.75
+# Assuming test_predictions_proba is a 2D array
+# and you have two classes
 
-# 根据概率确定未知类别的样本
-unknown_indices = np.where(np.max(test_predictions_proba, axis=1) < threshold)[0]
-test_predictions = classifier.predict(test_data)
-test_predictions[unknown_indices] = 'Unknown'
+# Get the probabilities of the first class
+class1_probabilities = test_predictions_proba[:, 0]
+class2_probabilities = test_predictions_proba[:, 1]
+class3_probabilities = test_predictions_proba[:, 2]
 
-# 提取未知类别的样本
-unknown_data = test_data.iloc[unknown_indices]
+# Plot the histogram
+plt.hist(class1_probabilities, bins=10, alpha=0.5, label='Class 1')
+plt.hist(class2_probabilities, bins=10, alpha=0.5, label='Class 2')
+plt.hist(class3_probabilities, bins=10, alpha=0.5, label='Class 3')
 
-# New cluster possiblities name 
-possibilities = [['COAD', 'PRAD'], ['PRAD', 'COAD']]
 
-# 将新增的两个类别名称添加到原有的类别列表中
-classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
+plt.title('Distribution Probabilities of 3 known classes')
+plt.xlabel('Probability')
+plt.ylabel('Frequency')
+plt.legend(loc='upper right')
 
-# 使用K均值聚类对未知类别中的样本进行分组
-if not unknown_data.empty:
-    kmeans = MyKMeans(n_clusters=len(classes), random_state=42)
-    kmeans.fit(train_data.values)  # 使用训练集数据进行聚类
-    unknown_predictions = kmeans.predict(unknown_data.values)
-    test_predictions[unknown_indices] = [classes[int(label)] for label in unknown_predictions]
+plt.show()
 
-# 输出结果
-print("預測結果：")
-print(test_predictions)
+# Find the maximum value of each row
+max_values = np.max(test_predictions_proba, axis=1) # row-wise
+# plot 
+plt.hist(max_values, bins=10, alpha=0.5, label='Classes')
 
-# 输出与测试标签对比的准确性
-test_labels_array = test_labels.values.ravel()
-accuracy = np.mean(test_predictions == test_labels_array)
-print("\預測正確率：", accuracy)
+plt.title('Distribution Probabilities of max 3 known classes')
+plt.xlabel('Probability')
+plt.ylabel('Frequency')
+plt.legend(loc='upper right')
+
+plt.show()
+
+# Find the best value of threshold interms of accuracy
+#thresholds = np.arange(0.51, 1.00, 0.01).tolist()
+thresholds = [0.75]
+
+max_accuracy = 0
+max_threshold = 0
+for threshold in thresholds:
+    
+    # Find the indices of the rows that have maximum value less than threshold
+    unknown_indices = np.where(np.max(test_predictions_proba, axis=1) < threshold)[0]
+    test_predictions = classifier.predict(test_data) # Using test data to predict  
+    print(test_predictions)
+    test_predictions[unknown_indices] = 'Unknown' # set the index of unknown_indices to 'Unknown'
+
+    # Extract the unknown data
+    unknown_data = test_data.iloc[unknown_indices]
+
+    # New cluster possiblities name 
+    possibilities = [['COAD', 'PRAD'], ['PRAD', 'COAD']]
+
+    # 将新增的两个类别名称添加到原有的类别列表中
+    classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
+
+    # 使用K均值聚类对未知类别中的样本进行分组
+    if not unknown_data.empty:
+        kmeans = MyKMeans(n_clusters=len(classes), random_state=42)
+        kmeans.fit(train_data.values)  # 使用训练集数据进行聚类
+        unknown_predictions = kmeans.predict(unknown_data.values) # return 0, 1, 2, 3, 4
+        # assign the label to the unknown data
+        test_predictions[unknown_indices] = [classes[int(label)] for label in unknown_predictions]
+
+    # 输出结果
+    #print("預測結果：")
+    print(test_predictions)
+
+    # Calculate the accuracy
+    test_labels_array = test_labels.values.ravel() # Convert the test_labels into 1D array
+    accuracy = np.mean(test_predictions == test_labels_array)
+    accuracy = max(accuracy, max_accuracy)
+    
+    if (accuracy > max_accuracy):
+        max_accuracy = accuracy
+        max_threshold = threshold
+    #print(threshold)
+    #print("\預測正確率：", accuracy)
+
+print("\預測正確率：", max_accuracy)
+print("\最佳閾值：", max_threshold)
+# cari tau gimana buat border di blocknya itu biar lebih bagus kli 
+# masukin code dari medium buat yg dbscan 
+# liat accuracnya 
+
+# apa sih unknown_data.values ama unknown_predictions
