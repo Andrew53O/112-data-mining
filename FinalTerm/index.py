@@ -5,10 +5,10 @@ from sklearn.cluster import KMeans
 from sklearn.impute import KNNImputer
 
 # 加载训练集和测试集数据
-train_data = pd.read_csv('data/train_data.csv', index_col='id')
-train_labels = pd.read_csv('data/train_label.csv', index_col='id')
-test_data = pd.read_csv('data/test_data.csv', index_col='id')
-test_labels = pd.read_csv('data/test_label.csv', index_col='id')
+train_data = pd.read_csv('../Data/train_data.csv', index_col='id')
+train_labels = pd.read_csv('../Data/train_label.csv', index_col='id')
+test_data = pd.read_csv('../Data/test_data.csv', index_col='id')
+test_labels = pd.read_csv('../Data/test_label.csv', index_col='id')
 
 def fill_zeros_with_knn(data, n_neighbors=5):
     # 记录哪些列是全零的
@@ -55,7 +55,8 @@ test_predictions[unknown_indices] = 'Unknown'
 unknown_data = test_data.iloc[unknown_indices]
 
 # 将新增的两个类别名称添加到原有的类别列表中
-classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
+
+classes = np.append(train_labels['Class'].unique(), ['COAD', 'PRAD'])
 
 # 使用K均值聚类对未知类别中的样本进行分组
 if not unknown_data.empty:
