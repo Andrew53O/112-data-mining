@@ -7,12 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 # For dbscan algorithm
-from scipy.spatial import distance
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
-from sklearn.manifold import TSNE
+from dbscan_helper import *
 
 
 
@@ -125,7 +120,7 @@ plt.xlabel('Probability')
 plt.ylabel('Frequency')
 plt.legend(loc='upper right')
 
-plt.show()
+# plt.show()
 
 # Find the maximum value of each row
 max_values = np.max(test_predictions_proba, axis=1) # row-wise
@@ -137,20 +132,22 @@ plt.xlabel('Probability')
 plt.ylabel('Frequency')
 plt.legend(loc='upper right')
 
-plt.show()
+# plt.show()
 
 # Find the best value of threshold interms of accuracy
-#thresholds = np.arange(0.51, 1.00, 0.01).tolist()
+#thresholds = np.arange(0.51, 0.85, 0.02).tolist()
 thresholds = [0.75]
 
 max_accuracy = 0
 max_threshold = 0
+max_eps = 0
+max_minPts = 0
 for threshold in thresholds:
     
     # Find the indices of the rows that have maximum value less than threshold
     unknown_indices = np.where(np.max(test_predictions_proba, axis=1) < threshold)[0]
     test_predictions = classifier.predict(test_data) # Using test data to predict  
-    print(test_predictions)
+    #print(test_predictions)
     test_predictions[unknown_indices] = 'Unknown' # set the index of unknown_indices to 'Unknown'
 
     # Extract the unknown data
@@ -160,35 +157,95 @@ for threshold in thresholds:
     possibilities = [['COAD', 'PRAD'], ['PRAD', 'COAD']]
 
     # 将新增的两个类别名称添加到原有的类别列表中
-    classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
-
-    # 使用K均值聚类对未知类别中的样本进行分组
-    if not unknown_data.empty:
-        kmeans = MyKMeans(n_clusters=len(classes), random_state=42)
-        kmeans.fit(train_data.values)  # 使用训练集数据进行聚类
-        unknown_predictions = kmeans.predict(unknown_data.values) # return 0, 1, 2, 3, 4
-        # assign the label to the unknown data
-        test_predictions[unknown_indices] = [classes[int(label)] for label in unknown_predictions]
-
+    #classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
+    #classes = ['PRAD', 'COAD']
+    classes = ['dummy', 'COAD', 'PRAD', 'noise']
+    print(classes[-1])
+    #epsilons = np.arange(0.2, 0.6, 0.1).tolist()
+    # epsilons = np.arange(180, 185, 1).tolist()
+    epsilons = [182]
+    #minpoints = np.arange(5, 25, 1).tolist()
+    minpoints = np.arange(50, 61, 1).tolist()
+    #minpoints = [52]
+    
+    for eps in epsilons:
+        for minPts in minpoints:
+            # 使用K均值聚类对未知类别中的样本进行分组
+            test_predictions[unknown_indices] = 'Unknown'
+            #if not unknown_data.empty:
+                # kmeans = MyKMeans(n_clusters=len(classes), random_state=42)
+            #dbscan_clustering = DBSCAN(eps=eps, min_samples=minPts)
+            dbscan_clustering = Basic_DBSCAN(eps=eps, minPts=minPts)
+            clusters = dbscan_clustering.fit_predict(unknown_data.values)
+            #print(clusters)
+            
+            n_clusters = len(set(clusters)) - (1 if -1 in clusters else 0)
+            if n_clusters <= 2:
+                print(clusters)
+                num_ones = np.count_nonzero(clusters == 1)
+                print("1:", num_ones)         
+                num_zero = np.count_nonzero(clusters == 0)
+                print("0:", num_zero)
+                num_minus_one = np.count_nonzero(clusters == -1)
+                print("-1:", num_minus_one)
+                
+                print(f"eps={eps}, min_samples={minPts} gives {n_clusters} clusters")
+                # assign the label to the unknown data
+                try:
+                    test_predictions[unknown_indices] = [classes[int(label)] for label in clusters]
+                except IndexError as e:
+                    print(clusters)
+                    print("Error happends", e)
+                    break
+            
+            test_labels_array = test_labels.values.ravel() # Convert the test_labels into 1D array
+            local_accuracy = np.mean(test_predictions == test_labels_array)
+            print(eps, minPts, local_accuracy)
+              
+            accuracy = max(local_accuracy, max_accuracy)
+            if (accuracy > max_accuracy):
+                max_accuracy = accuracy
+                max_threshold = threshold
+                max_eps = eps
+                max_minPts = minPts
+                print(eps, minPts, "Max ", accuracy)
+                print(clusters)
+                
+          
+                    
+        
     # 输出结果
     #print("預測結果：")
-    print(test_predictions)
+    # print(test_predictions)
 
     # Calculate the accuracy
-    test_labels_array = test_labels.values.ravel() # Convert the test_labels into 1D array
-    accuracy = np.mean(test_predictions == test_labels_array)
-    accuracy = max(accuracy, max_accuracy)
     
-    if (accuracy > max_accuracy):
-        max_accuracy = accuracy
-        max_threshold = threshold
-    #print(threshold)
+    print(threshold)
     #print("\預測正確率：", accuracy)
 
 print("\預測正確率：", max_accuracy)
 print("\最佳閾值：", max_threshold)
+print("\最佳eps：", max_eps)
+print("\最佳minPts：", max_minPts)
 # cari tau gimana buat border di blocknya itu biar lebih bagus kli 
 # masukin code dari medium buat yg dbscan 
 # liat accuracnya 
 
 # apa sih unknown_data.values ama unknown_predictions
+
+
+# kata yulin
+# 1. cuman perlu ngeclustering 2 data unknowin itu aja 
+
+# problem
+# 1. accuracy nya masih rendah, bingung tanya yulin
+# epsilon ama min pointnya ancur
+
+
+# \預測正確率： 0.9668674698795181
+# \最佳閾值： 0.75
+# \最佳eps： 200
+# \最佳minPts： 2
+
+
+# dpt ini apakah ga kettingian tuh?

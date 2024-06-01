@@ -15,7 +15,7 @@ def simple_DBSCAN(X, clusters, eps, minPts, metric=distance.euclidean):
     currentPoint = 0
     
     for i in range(0, X.shape[0]):
-        if clusters[i] is not 0:
+        if clusters[i] != 0:
             continue
     
         neighbors = neighborsGen(X, i, eps, metric)
@@ -106,11 +106,11 @@ class Basic_DBSCAN:
 scanner = Basic_DBSCAN(eps=0.3, minPts=30)
 
 
-df = pd.read_csv('../Data/test_data.csv') # ~10% of the original dataset
-cols = df.columns
+# df = pd.read_csv('../Data/test_data.csv') # ~10% of the original dataset
+# cols = df.columns
 
 
-X = df[[cols[0], cols[1]]]
-X = StandardScaler().fit_transform(X)
+# X = df[[cols[0], cols[1]]]
+# X = StandardScaler().fit_transform(X)
 
-clusters = scanner.fit_predict(X)
+# clusters = scanner.fit_predict(X)
