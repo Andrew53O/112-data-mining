@@ -4,10 +4,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import KNNImputer
 
 # 加载训练集和测试集数据
-train_data = pd.read_csv('data/train_data.csv', index_col='id')
-train_labels = pd.read_csv('data/train_label.csv', index_col='id')
-test_data = pd.read_csv('data/test_data.csv', index_col='id')
-test_labels = pd.read_csv('data/test_label.csv', index_col='id')
+train_data = pd.read_csv('../Data/train_data.csv', index_col='id')
+train_labels = pd.read_csv('../Data/train_label.csv', index_col='id')
+test_data = pd.read_csv('../Data/test_data.csv', index_col='id')
+test_labels = pd.read_csv('../Data/test_label.csv', index_col='id')
 
 threshold = 0.90 * len(train_data)
 columns_to_drop = train_data.columns[(train_data == 0).sum() > threshold]
@@ -63,7 +63,7 @@ classifier.fit(train_data, train_labels.values.ravel())
 test_predictions_proba = classifier.predict_proba(test_data)
 
 # 定义阈值来确定未知类别的样本
-threshold = 0.75
+threshold = 0.8
 
 # 根据概率确定未知类别的样本
 unknown_indices = np.where(np.max(test_predictions_proba, axis=1) < threshold)[0]
@@ -74,6 +74,7 @@ test_predictions[unknown_indices] = 'Unknown'
 unknown_data = test_data.iloc[unknown_indices]
 
 # 将新增的两个类别名称添加到原有的类别列表中
+
 classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
 
 # 使用K均值聚类对未知类别中的样本进行分组
@@ -81,6 +82,11 @@ if not unknown_data.empty:
     kmeans = MyKMeans(n_clusters=len(classes), random_state=42)
     kmeans.fit(train_data.values)  # 使用训练集数据进行聚类
     unknown_predictions = kmeans.predict(unknown_data.values)
+    print(np.count_nonzero(unknown_predictions == 0))
+    print(np.count_nonzero(unknown_predictions == 1))
+    print(np.count_nonzero(unknown_predictions == 2))
+    print(np.count_nonzero(unknown_predictions == 3))
+    print(np.count_nonzero(unknown_predictions == 4))
     test_predictions[unknown_indices] = [classes[int(label)] for label in unknown_predictions]
 
 # 输出结果

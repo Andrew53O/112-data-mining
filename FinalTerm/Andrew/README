@@ -1,0 +1,28 @@
+
+
+Note: 
+eps = >191.9
+minpoints = > 1.1
+accuracy = 0.96
+
+
+Problem
+1. 10 unknowon unknown data can't be classity 
+Solution
+1. can use other classification 
+
+References : 
+    Dbscan: 
+        Used:
+            https://medium.com/analytics-vidhya/dbscan-from-scratch-almost-b02096600c14
+
+        Others: 
+            https://scrunts23.medium.com/dbscan-algorithm-from-scratch-in-python-475b82e0571c
+            https://github.com/lakithasahan/dbscan-from-scratch/blob/master/DBSCANcompletecode.py
+
+
+Kmeans: 
+    https://towardsdatascience.com/create-your-own-k-means-clustering-algorithm-in-python-d7d4c9077670
+
+Hierarchical clustering: 
+https://medium.com/@quangloctrandinh1998vn/hierarchical-clustering-python-from-scratch-fc1c60e935f7
