@@ -48,49 +48,6 @@ def fill_zeros_with_knn(data, n_neighbors=2):
 # #填补测试数据中的0值
 # test_data = fill_zeros_with_knn(test_data)
 
-# 定义K-means算法
-class MyKMeans:
-    def __init__(self, n_clusters, max_iters=100, random_state=42):
-        self.n_clusters = n_clusters
-        self.max_iters = max_iters
-        self.random_state = random_state
-
-    def fit(self, X):
-        np.random.seed(self.random_state)
-        random_indices = np.random.permutation(X.shape[0])
-        self.centroids = X[random_indices[:self.n_clusters]]
-
-        for _ in range(self.max_iters):
-            self.labels = self.assign_clusters(X)
-            old_centroids = self.centroids
-            self.centroids = self.update_centroids(X)
-
-            if np.all(old_centroids == self.centroids):
-                break
-
-    def assign_clusters(self, X):
-        labels = np.zeros(X.shape[0])
-        for i, point in enumerate(X):
-            distances = [compute_distance(point, centroid) for centroid in self.centroids]
-            labels[i] = np.argmin(distances)
-        return labels
-
-    def update_centroids(self, X):
-        centroids = np.zeros((self.n_clusters, X.shape[1]))
-        for i in range(self.n_clusters):
-            points = X[self.labels == i]
-            if len(points) > 0:
-                centroids[i] = np.mean(points, axis=0)
-        return centroids
-
-    def predict(self, X):
-        labels = self.assign_clusters(X)
-        return labels
-
-
-
-
-
 
 
 
@@ -120,6 +77,7 @@ plt.xlabel('Probability')
 plt.ylabel('Frequency')
 plt.legend(loc='upper right')
 
+# plt.savefig('All3Class.jpg', format='jpg', dpi=600)
 # plt.show()
 
 # Find the maximum value of each row
@@ -132,6 +90,7 @@ plt.xlabel('Probability')
 plt.ylabel('Frequency')
 plt.legend(loc='upper right')
 
+# plt.savefig('Max3Class.jpg', format='jpg', dpi=600)
 # plt.show()
 
 # Find the best value of threshold interms of accuracy
@@ -154,19 +113,21 @@ for threshold in thresholds:
     unknown_data = test_data.iloc[unknown_indices]
 
     # New cluster possiblities name 
-    possibilities = [['COAD', 'PRAD'], ['PRAD', 'COAD']]
+    # possibilities = [['COAD', 'PRAD'], ['PRAD', 'COAD']]
 
     # 将新增的两个类别名称添加到原有的类别列表中
     #classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
     #classes = ['PRAD', 'COAD']
-    classes = ['dummy', 'COAD', 'PRAD', 'noise']
+    classes = ['Dummy', 'PRAD', 'COAD', 'Noise']
     print(classes[-1])
     #epsilons = np.arange(0.2, 0.6, 0.1).tolist()
     # epsilons = np.arange(180, 185, 1).tolist()
-    epsilons = [182]
+    #epsilons = [182]
+    epsilons = [192]
     #minpoints = np.arange(5, 25, 1).tolist()
-    minpoints = np.arange(50, 61, 1).tolist()
+    # minpoints = np.arange(50, 61, 1).tolist()
     #minpoints = [52]
+    minpoints = [12]
     
     for eps in epsilons:
         for minPts in minpoints:
@@ -178,30 +139,46 @@ for threshold in thresholds:
             dbscan_clustering = Basic_DBSCAN(eps=eps, minPts=minPts)
             clusters = dbscan_clustering.fit_predict(unknown_data.values)
             #print(clusters)
-            
             n_clusters = len(set(clusters)) - (1 if -1 in clusters else 0)
             if n_clusters <= 2:
                 print(clusters)
-                num_ones = np.count_nonzero(clusters == 1)
-                print("1:", num_ones)         
-                num_zero = np.count_nonzero(clusters == 0)
-                print("0:", num_zero)
-                num_minus_one = np.count_nonzero(clusters == -1)
+                num_minus_one = clusters.count(-1)
                 print("-1:", num_minus_one)
+                num_ones = clusters.count(1)
+                print("1:", num_ones)         
+                num_zero = clusters.count(2)
+                print("2:", num_zero)
                 
+                print(clusters)
                 print(f"eps={eps}, min_samples={minPts} gives {n_clusters} clusters")
                 # assign the label to the unknown data
                 try:
                     test_predictions[unknown_indices] = [classes[int(label)] for label in clusters]
+                    unknown_data_label = [classes[int(label)] for label in clusters]
                 except IndexError as e:
                     print(clusters)
                     print("Error happends", e)
                     break
             
+            # Handle the noise data
+            noise_indices = np.where(test_predictions[unknown_indices] == 'Noise')[0]
+            noise_data = unknown_data.iloc[noise_indices]
+            
+            # Using classification to classify the clustered data 
+            classifier_noise = RandomForestClassifier(n_estimators=100, random_state=42)
+            classifier_noise.fit(unknown_data, unknown_data_label) 
+            print("unknown_data", unknown_data)
+            print(unknown_data_label)
+            print("noise data", noise_data)
+            classifier_noise_predictions = classifier_noise.predict(noise_data)
+            print("classifer noise predictions", classifier_noise_predictions)
+            
+            
+            
             test_labels_array = test_labels.values.ravel() # Convert the test_labels into 1D array
             local_accuracy = np.mean(test_predictions == test_labels_array)
             print(eps, minPts, local_accuracy)
-              
+               
             accuracy = max(local_accuracy, max_accuracy)
             if (accuracy > max_accuracy):
                 max_accuracy = accuracy
