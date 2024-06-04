@@ -1,60 +1,26 @@
 import pandas as pd
 import numpy as np
-from sklearn.impute import KNNImputer
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, IsolationForest
 from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
+from sklearn.impute import KNNImputer
+from sklearn.decomposition import PCA
 
-# 加载数据
+# 加载训练集和测试集数据
 train_data = pd.read_csv('data/train_data.csv', index_col='id')
 train_labels = pd.read_csv('data/train_label.csv', index_col='id')
 test_data = pd.read_csv('data/test_data.csv', index_col='id')
 test_labels = pd.read_csv('data/test_label.csv', index_col='id')
 
-# 检查训练数据集中所有值为0的列
-all_zero_columns = train_data.columns[(train_data == 0).all()]
+threshold = 0.9 * len(train_data)
+columns_to_drop = train_data.columns[(train_data == 0).sum() > threshold]
 
-print(f"训练数据集中所有值为0的列数: {len(all_zero_columns)}")
-print(f"这些列是: {all_zero_columns}")
-
-# 移除所有值为0的列
-train_data = train_data.drop(columns=all_zero_columns)
-test_data = test_data.drop(columns=all_zero_columns)
-
-# 假设所有剩余列都是数值型
-numerical_features = train_data.columns.tolist()
-
-# 创建预处理管道
-preprocessor = Pipeline(steps=[
-    ('imputer', KNNImputer(n_neighbors=5, missing_values=0)),  # 填补0值
-    ('scaler', StandardScaler())  # 标准化
-])
-
-# 应用预处理管道到训练数据
-train_data_imputed = preprocessor.named_steps['imputer'].fit_transform(train_data)
-print(f"填补0值后的形状: {train_data_imputed.shape}")
-
-train_data_preprocessed = preprocessor.named_steps['scaler'].fit_transform(train_data_imputed)
-print(f"标准化后的形状: {train_data_preprocessed.shape}")
-
-# 应用预处理管道到测试数据
-test_data_imputed = preprocessor.named_steps['imputer'].transform(test_data)
-test_data_preprocessed = preprocessor.named_steps['scaler'].transform(test_data_imputed)
-
-# 将处理后的数据转换为 DataFrame
-train_data_preprocessed_df = pd.DataFrame(train_data_preprocessed, columns=numerical_features, index=train_data.index)
-test_data_preprocessed_df = pd.DataFrame(test_data_preprocessed, columns=numerical_features, index=test_data.index)
-
-# 打印预处理后的数据
-print("\n预处理后的训练数据：")
-print(train_data_preprocessed_df.head())
-
-print("\n预处理后的测试数据：")
-print(test_data_preprocessed_df.head())
+train_data = train_data.drop(columns=columns_to_drop)
+test_data = test_data.drop(columns=columns_to_drop)
 
 def compute_distance(x1, x2):
     return np.sqrt(np.sum((x1 - x2) ** 2))
 
+# 定义K-means算法
 class MyKMeans:
     def __init__(self, n_clusters, max_iters=100, random_state=42):
         self.n_clusters = n_clusters
@@ -95,27 +61,27 @@ class MyKMeans:
 
 # 使用随机森林分类器对所有样本进行分类
 classifier = RandomForestClassifier(n_estimators=100, random_state=42)
-classifier.fit(train_data_preprocessed_df, train_labels.values.ravel())
-test_predictions_proba = classifier.predict_proba(test_data_preprocessed_df)
+classifier.fit(train_data, train_labels.values.ravel())
+test_predictions_proba = classifier.predict_proba(test_data)
 
 # 定义阈值来确定未知类别的样本
 threshold = 0.75
 
 # 根据概率确定未知类别的样本
 unknown_indices = np.where(np.max(test_predictions_proba, axis=1) < threshold)[0]
-test_predictions = classifier.predict(test_data_preprocessed_df)
+test_predictions = classifier.predict(test_data)
 test_predictions[unknown_indices] = 'Unknown'
 
 # 提取未知类别的样本
-unknown_data = test_data_preprocessed_df.iloc[unknown_indices]
+unknown_data = test_data.iloc[unknown_indices]
 
 # 将新增的两个类别名称添加到原有的类别列表中
-classes = np.append(train_labels['Class'].unique(), ['COAD', 'PRAD'])
+classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
 
 # 使用K均值聚类对未知类别中的样本进行分组
 if not unknown_data.empty:
     kmeans = MyKMeans(n_clusters=len(classes), random_state=42)
-    kmeans.fit(train_data_preprocessed_df.values)  # 使用训练集数据进行聚类
+    kmeans.fit(train_data.values)  # 使用训练集数据进行聚类
     unknown_predictions = kmeans.predict(unknown_data.values)
     test_predictions[unknown_indices] = [classes[int(label)] for label in unknown_predictions]
 
