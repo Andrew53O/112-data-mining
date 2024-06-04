@@ -5,6 +5,8 @@ eps = >191.9
 minpoints = > 1.1
 accuracy = 0.96
 
+eps = 192
+minpint = 12
 
 Problem
 1. 10 unknowon unknown data can't be classity 
@@ -47,4 +49,5 @@ https://medium.com/@quangloctrandinh1998vn/hierarchical-clustering-python-from-s
     - 把 Unknown data 的label 變成 'Unknown' 
 
     - 用 Dbscan分群 把 Unknown data 分群 
-    
+
+

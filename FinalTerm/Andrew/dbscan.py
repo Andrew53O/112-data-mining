@@ -8,6 +8,11 @@ from sklearn.ensemble import RandomForestClassifier
 # For dbscan algorithm
 from dbscan_helper import *
 
+# for finding the best hyperparameters
+from sklearn.metrics import silhouette_score
+from bayes_opt import BayesianOptimization
+
+
 # Load data
 train_data = pd.read_csv('../Data/train_data.csv', index_col='id')
 train_labels = pd.read_csv('../Data/train_label.csv', index_col='id')
@@ -66,11 +71,43 @@ unknown_data = test_data.iloc[unknown_indices]
 classes = ['Dump', 'PRAD', 'COAD', 'Noise']
 # 2 different permuation possibilities
 newclasses = [['Dump', 'PRAD', 'COAD', 'Noise'], ['Dump', 'COAD', 'PRAD', 'Noise']]
-epsilons = [192] # best accuracies epsilon for this dataset
-minpoints = [12] # best accuracies minpoints for this dataset
+
+
+
+# Define the range of the hyperparameters
+pbounds = {'eps': (0.1, 200), 'minPts': (1, 20)}
+
+# Define the function to optimize
+def dbscan_func(eps, minPts):
+    minPts = int(minPts)
+    dbscan = AndrewDBSCAN(eps=eps, minPts=minPts) # call our dbscan clustering
+    clusters = dbscan.fit_predict(unknown_data.values)
+    # Check if more than one cluster is formed
+    if len(set(clusters)) > 1:
+        score = silhouette_score(unknown_data.values, clusters)
+    else:
+        score = -1  # return a low score
+    return score
+
+# Initialize the optimizer we use BayesianOptimization
+optimizer = BayesianOptimization(
+    f=dbscan_func,
+    pbounds=pbounds,
+    random_state=1,
+)
+
+# Perform optimization
+optimizer.maximize(
+    init_points=2,
+    n_iter=3,
+)
+
+# Best epsilons and minpoints
+epsilons = optimizer.max['params']['eps']
+minpoints = optimizer.max['params']['minPts']
 
 # Use DBSCAN clustering to cluster the unknown data
-dbscan_clustering = AndrewDBSCAN(eps=epsilons.pop(), minPts=minpoints.pop())
+dbscan_clustering = AndrewDBSCAN(eps=epsilons, minPts=minpoints)
 clusters = dbscan_clustering.fit_predict(unknown_data.values)
 
 # print the count of -1, 1, 1 after clustering 
@@ -114,3 +151,6 @@ for classesis in newclasses: # for finding the best permutation of classes
 print("Test Labels     : ", ' '.join(map(str, test_labels_array)))
 print("Test Predictions: ", ' '.join(map(str, test_predictions.ravel())))
 print("\n預測正確率：", max_accuracy)
+
+
+
