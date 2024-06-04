@@ -5,61 +5,19 @@ import matplotlib.pyplot as plt
 # For Classification
 from sklearn.ensemble import RandomForestClassifier
 
-
 # For dbscan algorithm
 from dbscan_helper import *
 
-
-
-# 加载训练集和测试集数据
+# Load data
 train_data = pd.read_csv('../Data/train_data.csv', index_col='id')
 train_labels = pd.read_csv('../Data/train_label.csv', index_col='id')
 test_data = pd.read_csv('../Data/test_data.csv', index_col='id')
 test_labels = pd.read_csv('../Data/test_label.csv', index_col='id')
 
-def compute_distance(x1, x2):
-    return np.sqrt(np.sum((x1 - x2) ** 2))
-
-def fill_zeros_with_knn(data, n_neighbors=2):
-    # 记录哪些列是全零的
-    zero_cols = data.columns[(data == 0).all()]
-    non_zero_data = data.drop(columns=zero_cols)
-    
-    imputer = KNNImputer(n_neighbors=n_neighbors, missing_values=0)
-    data_imputed = imputer.fit_transform(non_zero_data)
-    
-    # 将填补后的数据转换回 DataFrame
-    data_imputed_df = pd.DataFrame(data_imputed, columns=non_zero_data.columns, index=data.index)
-    
-    # 创建一个全零的 DataFrame
-    zero_cols_df = pd.DataFrame(0, index=data.index, columns=zero_cols)
-    
-    # 将全零的列加回去
-    data_imputed_df = pd.concat([data_imputed_df, zero_cols_df], axis=1)
-    
-    # 按照原始列的顺序重新排序
-    data_imputed_df = data_imputed_df.reindex(columns=data.columns)
-    
-    return data_imputed_df
-
-# # 填补训练数据中的0值
-# train_data = fill_zeros_with_knn(train_data)
-
-# #填补测试数据中的0值
-# test_data = fill_zeros_with_knn(test_data)
-
-
-
-
-
-
-# 使用随机森林分类器对所有样本进行分类
+# Using RandomForestClassifier classifier, train the model using train data and predict the test
 classifier = RandomForestClassifier(n_estimators=100, random_state=42)
 classifier.fit(train_data, train_labels.values.ravel()) # Convert labels into 1D array
 test_predictions_proba = classifier.predict_proba(test_data) # Predict each data belongs to what class label
-
-# Assuming test_predictions_proba is a 2D array
-# and you have two classes
 
 # Get the probabilities of the first class
 class1_probabilities = test_predictions_proba[:, 0]
@@ -71,38 +29,29 @@ plt.hist(class1_probabilities, bins=10, alpha=0.5, label='Class 1')
 plt.hist(class2_probabilities, bins=10, alpha=0.5, label='Class 2')
 plt.hist(class3_probabilities, bins=10, alpha=0.5, label='Class 3')
 
-
 plt.title('Distribution Probabilities of 3 known classes')
 plt.xlabel('Probability')
 plt.ylabel('Frequency')
 plt.legend(loc='upper right')
 
-# plt.savefig('All3Class.jpg', format='jpg', dpi=600)
-# plt.show()
+# plt.savefig('All3Class.jpg', format='jpg', dpi=600) # save the plot
+# plt.show() # show the plot 
 
 # Find the maximum value of each row
 max_values = np.max(test_predictions_proba, axis=1) # row-wise
-# plot 
 plt.hist(max_values, bins=10, alpha=0.5, label='Classes')
-
 plt.title('Distribution Probabilities of max 3 known classes')
 plt.xlabel('Probability')
 plt.ylabel('Frequency')
 plt.legend(loc='upper right')
 
-# plt.savefig('Max3Class.jpg', format='jpg', dpi=600)
-# plt.show()
+# plt.savefig('Max3Class.jpg', format='jpg', dpi=600) # save the plot
+# plt.show()  # show the plot 
 
-# Find the best value of threshold interms of accuracy
-#thresholds = np.arange(0.51, 0.85, 0.02).tolist()
+# Settings for the threshold, we found 0.75 is the best threshold after trying different values
 thresholds = [0.75]
 
-max_accuracy = 0
-max_threshold = 0
-max_eps = 0
-max_minPts = 0
 for threshold in thresholds:
-    
     # Find the indices of the rows that have maximum value less than threshold
     unknown_indices = np.where(np.max(test_predictions_proba, axis=1) < threshold)[0]
     test_predictions = classifier.predict(test_data) # Using test data to predict  
@@ -115,11 +64,11 @@ for threshold in thresholds:
     # New cluster possiblities name 
     # possibilities = [['COAD', 'PRAD'], ['PRAD', 'COAD']]
 
-    # 将新增的两个类别名称添加到原有的类别列表中
-    #classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
-    #classes = ['PRAD', 'COAD']
+    # 4 classes: Dummy, PRAD, COAD, Noise
+    # Noise -1, 
     classes = ['Dummy', 'PRAD', 'COAD', 'Noise']
-    print(classes[-1])
+    #classes = ['Dummy', 'COAD', 'PRAD', 'Noise']
+    # print(classes[-1])
     #epsilons = np.arange(0.2, 0.6, 0.1).tolist()
     # epsilons = np.arange(180, 185, 1).tolist()
     #epsilons = [182]
@@ -161,24 +110,38 @@ for threshold in thresholds:
                     break
             
             # Handle the noise data
-            noise_indices = np.where(test_predictions[unknown_indices] == 'Noise')[0]
-            noise_data = unknown_data.iloc[noise_indices]
+            noise_indices = np.where(np.array(test_predictions) == 'Noise')[0]
+            noise_data = test_data.iloc[noise_indices]
+            
+            # Get the All Known data 
+            known_indices = np.where(np.array(test_predictions) != 'Noise')[0]
+            known_data = test_data.iloc[known_indices]
+            known_label = test_predictions[known_indices]
             
             # Using classification to classify the clustered data 
             classifier_noise = RandomForestClassifier(n_estimators=100, random_state=42)
-            classifier_noise.fit(unknown_data, unknown_data_label) 
-            print("unknown_data", unknown_data)
-            print(unknown_data_label)
+            classifier_noise.fit(known_data, known_label) 
+            #print("unknown_data", unknown_data)
+            #print(noise_data_label)
             print("noise data", noise_data)
             classifier_noise_predictions = classifier_noise.predict(noise_data)
+            print("test predictions before", test_predictions)
+            #[classes[int(label)] for label in clusters]
+            print("noise indices", noise_indices)
+            test_predictions[noise_indices] = classifier_noise_predictions
+            print("test predictions after", test_predictions)
             print("classifer noise predictions", classifier_noise_predictions)
             
             
             
+            
+        
+            
             test_labels_array = test_labels.values.ravel() # Convert the test_labels into 1D array
             local_accuracy = np.mean(test_predictions == test_labels_array)
             print(eps, minPts, local_accuracy)
-               
+            print("test labels", test_labels_array)
+            
             accuracy = max(local_accuracy, max_accuracy)
             if (accuracy > max_accuracy):
                 max_accuracy = accuracy
@@ -226,3 +189,5 @@ print("\最佳minPts：", max_minPts)
 
 
 # dpt ini apakah ga kettingian tuh?
+
+# ganti classification pakek data yg 2 cluster itu aaj 

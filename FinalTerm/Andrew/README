@@ -26,3 +26,25 @@ Kmeans:
 
 Hierarchical clustering: 
 https://medium.com/@quangloctrandinh1998vn/hierarchical-clustering-python-from-scratch-fc1c60e935f7
+
+
+* Programming logic DBSCAN 
+
+1. Read test and train data 
+2. Try Preprocessing
+    - Drop columns with more than 90% zeros (Resulting in decrease a lot of accuracy)
+    - 
+3. Using Classification (分類) to clasify train data 
+    - To Save each data probability in class A, B, C (Picture in 3 colors)
+    
+    # For displaying only
+    - Display each data probability in class A, B, C 
+    - Dispaly each data max probability in either class A, B or C 
+
+4. 處理 Unknown data 
+    -Unknown data 是 data that is below our setting threshould, in this code we use 0.75
+
+    - 把 Unknown data 的label 變成 'Unknown' 
+
+    - 用 Dbscan分群 把 Unknown data 分群 
+    
