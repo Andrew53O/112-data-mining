@@ -68,7 +68,7 @@ def expand(X, clusters, point, neighbors, currentPoint, eps, minPts, metric):
         
         i += 1
         
-class Basic_DBSCAN:
+class AndrewDBSCAN:
     """
     Parameters:
     
@@ -103,8 +103,6 @@ class Basic_DBSCAN:
         
         return clusters
     
-scanner = Basic_DBSCAN(eps=0.3, minPts=30)
-
 
 # df = pd.read_csv('../Data/test_data.csv') # ~10% of the original dataset
 # cols = df.columns
