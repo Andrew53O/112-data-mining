@@ -83,7 +83,7 @@ pbounds = {'eps': (0.1, 200), 'minPts': (1, 20)}
 # Define the function to optimize
 def dbscan_func(eps, minPts):
     minPts = int(minPts)
-    dbscan = AndrewDBSCAN(eps=eps, minimalPts=minPts) # call our dbscan clustering
+    dbscan = AndrewDBSCANwrapper(eps=eps, minimalPts=minPts) # call our dbscan clustering
     clusters = dbscan.fit_predict(unknown_data.values)
     # Check if more than one cluster is formed
     if len(set(clusters)) > 1:
@@ -124,7 +124,7 @@ epsilons = optimizer.max['params']['eps']
 minpoints = optimizer.max['params']['minPts']
 
 # Use DBSCAN clustering to cluster the unknown data
-dbscan_clustering = AndrewDBSCAN(eps=epsilons, minimalPts=minpoints)
+dbscan_clustering = AndrewDBSCANwrapper(eps=epsilons, minimalPts=minpoints)
 clusters = dbscan_clustering.fit_predict(unknown_data.values)
 
 # print the count of -1, 1, 1 after clustering 

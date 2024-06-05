@@ -1,6 +1,6 @@
 from scipy.spatial import distance
 
-class AndrewDBSCAN:
+class AndrewDBSCANwrapper:
     # Initialize the DBSCAN object
     def __init__(self, eps, minimalPts, metric = distance.euclidean):
         self.eps = eps # eps -> radius of each point to find neighbors
@@ -32,7 +32,7 @@ def DBSCAN(data, clusters, eps, minimalPts, metric = distance.euclidean):
         else:
             # keep expanding the cluster 
             currentPointLabel += 1
-            expand(data, clusters, point, neighbors, currentPointLabel, eps, minimalPts, metric)
+            expandCluster(data, clusters, point, neighbors, currentPointLabel, eps, minimalPts, metric)
     
     return clusters
 
@@ -48,7 +48,7 @@ def neighborsFind(data, point, eps, metric):
     return neighborsList
 
 # This function expands the cluster from a given `point` until the boundaries of the neighborhood are reached. It assigns the `point` and all points in `neighbors` to the current cluster (`currentPointLabel`).
-def expand(data, clusters, point, neighbors, currentPointLabel, eps, minimalPts, metric):
+def expandCluster(data, clusters, point, neighbors, currentPointLabel, eps, minimalPts, metric):
     clusters[point] = currentPointLabel
     
     i = 0
