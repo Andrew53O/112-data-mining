@@ -2,6 +2,10 @@ import numpy as np
 from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
 import pandas as pd
+import re
+import sys
+from contextlib import redirect_stdout
+import io
 
 # For Classification
 from sklearn.ensemble import RandomForestClassifier
@@ -95,13 +99,27 @@ optimizer = BayesianOptimization(
     random_state=1,
 )
 
-# Perform optimization
-optimizer.maximize(
-    init_points=2,
-    n_iter=3,
-)
+# Create a string buffer to capture the output
+buffer = io.StringIO()
 
-# Best epsilons and minpoints
+# Perform optimization
+with redirect_stdout(buffer):
+    optimizer.maximize(
+        init_points=2, # perform 2 random steps before starting bayesian optimization
+        n_iter=5, # perform 3 steps of bayesian optimization 
+    )
+
+
+# Function to strip ANSI codes
+def strip_ansi_codes(text):
+    ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', text)
+
+# Get the output and strip ANSI codes
+output = strip_ansi_codes(buffer.getvalue())
+print(output) # output after process the ansi code
+
+# # Best epsilons and minpoints
 epsilons = optimizer.max['params']['eps']
 minpoints = optimizer.max['params']['minPts']
 
@@ -128,17 +146,18 @@ for classesis in newclasses: # for finding the best permutation of classes
 
     # Handle the noise data
     noise_indices = np.where(np.array(test_predictions) == 'Noise')[0]
-    noise_data = test_data.iloc[noise_indices]
+    if(noise_indices.size > 0): # if there is noise data
+        noise_data = test_data.iloc[noise_indices]
+        # Get the All Known data (All 5 class)
+        known_indices = np.where(np.array(test_predictions) != 'Noise')[0]
+        known_data = test_data.iloc[known_indices]
+        known_label = test_predictions[known_indices]
 
-    # Get the All Known data (All 5 class)
-    known_indices = np.where(np.array(test_predictions) != 'Noise')[0]
-    known_data = test_data.iloc[known_indices]
-    known_label = test_predictions[known_indices]
-
-    # Using classification to classify uknown data after clustering 
-    classifier_noise = RandomForestClassifier(n_estimators=100, random_state=42)
-    classifier_noise.fit(known_data, known_label) 
-    classifier_noise_predictions = classifier_noise.predict(noise_data)
+        # Using classification to classify uknown data after clustering 
+        classifier_noise = RandomForestClassifier(n_estimators=100, random_state=42)
+        classifier_noise.fit(known_data, known_label) 
+        classifier_noise_predictions = classifier_noise.predict(noise_data)
+    
     # Assign the result to the overall test predictions
     test_predictions[noise_indices] = classifier_noise_predictions
     test_labels_array = test_labels.values.ravel() # Convert the test_labels into 1D array

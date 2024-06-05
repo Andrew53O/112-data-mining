@@ -52,7 +52,9 @@ def expand(data, clusters, point, neighbors, currentPointLabel, eps, minimalPts,
     clusters[point] = currentPointLabel
     
     i = 0
-    for nextPoint in neighbors:
+    while i < len(neighbors):
+        # Get the next neighbor
+        nextPoint = neighbors[i]
         # It's still a the cluster point, if the NEXT neighbor is a noise, but no need to find the neighbors of the noise
         if clusters[nextPoint] == -1: 
             clusters[nextPoint] = currentPointLabel
