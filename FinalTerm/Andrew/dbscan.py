@@ -1,6 +1,6 @@
 import numpy as np
-from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
+from sklearn.impute import KNNImputer
 import pandas as pd
 import re
 import sys
@@ -96,6 +96,46 @@ train_labels = pd.read_csv('../Data/train_label.csv', index_col='id')
 test_data = pd.read_csv('../Data/test_data.csv', index_col='id')
 test_labels = pd.read_csv('../Data/test_label.csv', index_col='id')
 
+threshold = 0.90 * len(train_data)
+columns_to_drop = train_data.columns[(train_data == 0).sum() > threshold]
+
+
+def compute_distance(x1, x2):
+    return np.sqrt(np.sum((x1 - x2) ** 2))
+
+def fill_zeros_with_knn(data, n_neighbors=2):
+    # 记录哪些列是全零的
+    zero_cols = data.columns[(data == 0).all()]
+    non_zero_data = data.drop(columns=zero_cols)
+
+    imputer = KNNImputer(n_neighbors=n_neighbors, missing_values=0)
+    data_imputed = imputer.fit_transform(non_zero_data)
+
+    # 将填补后的数据转换回 DataFrame
+    data_imputed_df = pd.DataFrame(data_imputed, columns=non_zero_data.columns, index=data.index)
+
+    # 创建一个全零的 DataFrame
+    zero_cols_df = pd.DataFrame(0, index=data.index, columns=zero_cols)
+
+    # 将全零的列加回去
+    data_imputed_df = pd.concat([data_imputed_df, zero_cols_df], axis=1)
+
+    # 按照原始列的顺序重新排序
+    data_imputed_df = data_imputed_df.reindex(columns=data.columns)
+
+    return data_imputed_df
+
+# train_data = train_data.drop(columns=columns_to_drop)
+# test_data = test_data.drop(columns=columns_to_drop)
+
+# # # 填补训练数据中的0值
+# train_data = fill_zeros_with_knn(train_data)
+
+# #填补测试数据中的0值
+# test_data = fill_zeros_with_knn(test_data)
+
+
+
 # Using RandomForestClassifier classifier, train the model using train data and predict the test
 classifier = RandomForestClassifier(n_estimators=100, random_state=42)
 classifier.fit(train_data, train_labels.values.ravel()) # Convert labels into 1D array
@@ -178,7 +218,7 @@ buffer = io.StringIO()
 with redirect_stdout(buffer):
     optimizer.maximize(
         init_points=2, # perform 2 random steps before starting bayesian optimization
-        n_iter=5, # perform 3 steps of bayesian optimization 
+        n_iter=3, # perform n steps of bayesian optimization 
     )
 
 
@@ -194,7 +234,8 @@ print(output) # output after process the ansi code
 # # Best epsilons and minpoints
 epsilons = optimizer.max['params']['eps']
 minpoints = optimizer.max['params']['minPts']
-
+print("Best epsilons: ", epsilons)
+print("Best minpoints: ", minpoints)
 # Use DBSCAN clustering to cluster the unknown data
 dbscan_clustering = AndrewDBSCANwrapper(eps=epsilons, minimalPts=minpoints)
 clusters = dbscan_clustering.fit_predict(unknown_data.values)
@@ -218,7 +259,10 @@ for classesis in newclasses: # for finding the best permutation of classes
 
     # Handle the noise data
     noise_indices = np.where(np.array(test_predictions) == 'Noise')[0]
+    print(noise_indices.size)
     if(noise_indices.size > 0): # if there is noise data
+        print("Noise data found")
+        
         noise_data = test_data.iloc[noise_indices]
         # Get the All Known data (All 5 class)
         known_indices = np.where(np.array(test_predictions) != 'Noise')[0]
@@ -229,9 +273,9 @@ for classesis in newclasses: # for finding the best permutation of classes
         classifier_noise = RandomForestClassifier(n_estimators=100, random_state=42)
         classifier_noise.fit(known_data, known_label) 
         classifier_noise_predictions = classifier_noise.predict(noise_data)
-    
-    # Assign the result to the overall test predictions
-    test_predictions[noise_indices] = classifier_noise_predictions
+        # Assign the result to the overall test predictions
+        test_predictions[noise_indices] = classifier_noise_predictions
+        
     test_labels_array = test_labels.values.ravel() # Convert the test_labels into 1D array
     local_accuracy = np.mean(test_predictions == test_labels_array)
     if (local_accuracy > max_accuracy): 
