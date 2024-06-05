@@ -1,17 +1,43 @@
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import KNNImputer
 
 train_data = pd.read_csv('data/train_data.csv', index_col='id')
 train_labels = pd.read_csv('data/train_label.csv', index_col='id')
 test_data = pd.read_csv('data/test_data.csv', index_col='id')
 test_labels = pd.read_csv('data/test_label.csv', index_col='id')
 
-threshold = 0.9 * len(train_data)
-columns_to_drop = train_data.columns[(train_data == 0).sum() > threshold]
+def compute_distance(x1, x2):
+    return np.sqrt(np.sum((x1 - x2) ** 2))
 
-train_data = train_data.drop(columns=columns_to_drop)
-test_data = test_data.drop(columns=columns_to_drop)
+def fill_zeros_with_knn(data, n_neighbors=5):
+    # 记录哪些列是全零的
+    zero_cols = data.columns[(data == 0).all()]
+    non_zero_data = data.drop(columns=zero_cols)
+
+    imputer = KNNImputer(n_neighbors=n_neighbors, missing_values=0)
+    data_imputed = imputer.fit_transform(non_zero_data)
+
+    # 将填补后的数据转换回 DataFrame
+    data_imputed_df = pd.DataFrame(data_imputed, columns=non_zero_data.columns, index=data.index)
+
+    # 创建一个全零的 DataFrame
+    zero_cols_df = pd.DataFrame(0, index=data.index, columns=zero_cols)
+
+    # 将全零的列加回去
+    data_imputed_df = pd.concat([data_imputed_df, zero_cols_df], axis=1)
+
+    # 按照原始列的顺序重新排序
+    data_imputed_df = data_imputed_df.reindex(columns=data.columns)
+
+    return data_imputed_df
+
+# # 填补训练数据中的0值
+train_data = fill_zeros_with_knn(train_data)
+
+# #填补测试数据中的0值
+test_data = fill_zeros_with_knn(test_data)
 
 def dis_cal(x1, x2):
     return np.sqrt(np.sum((x1 - x2) ** 2))
@@ -58,7 +84,7 @@ classifier = RandomForestClassifier(n_estimators=100, random_state=42)
 classifier.fit(train_data, train_labels.values.ravel())
 test_predictions_proba = classifier.predict_proba(test_data)
 
-threshold = 0.75
+threshold = 0.65
 
 unknown_indices = np.where(np.max(test_predictions_proba, axis=1) < threshold)[0]
 test_predictions = classifier.predict(test_data)
@@ -67,21 +93,16 @@ test_labels_array = test_labels.values.ravel()
 
 a = 0
 b = 0
-c = 0
 
 for i in range(len(test_predictions)):
     if test_labels_array[i] != 'PRAD' and test_labels_array[i] != 'COAD':
         if test_predictions[i] == test_labels_array[i]:
             a += 1
-        else:
-            c += 1
         b += 1
 
 print(test_predictions)
 print(test_labels_array)
 print(a/b*100, "%")
-print(c/b*100, "%")
-print(a, b, c)
 
 unknown_data = test_data.iloc[unknown_indices]
 

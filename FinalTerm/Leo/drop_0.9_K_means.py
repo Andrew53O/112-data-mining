@@ -67,21 +67,16 @@ test_labels_array = test_labels.values.ravel()
 
 a = 0
 b = 0
-c = 0
 
 for i in range(len(test_predictions)):
     if test_labels_array[i] != 'PRAD' and test_labels_array[i] != 'COAD':
         if test_predictions[i] == test_labels_array[i]:
             a += 1
-        else:
-            c += 1
         b += 1
 
 print(test_predictions)
 print(test_labels_array)
 print(a/b*100, "%")
-print(c/b*100, "%")
-print(a, b, c)
 
 unknown_data = test_data.iloc[unknown_indices]
 
