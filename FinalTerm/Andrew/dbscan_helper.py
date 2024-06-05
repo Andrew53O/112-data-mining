@@ -1,114 +1,76 @@
 from scipy.spatial import distance
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
-from sklearn.manifold import TSNE
-from sklearn.cluster import DBSCAN
 
-def simple_DBSCAN(X, clusters, eps, minPts, metric=distance.euclidean):
-    """
-    Driver; 
-    iterates through neighborsGen for every point in X
-    expands cluster for every point not determined to be noise
-    """
-    currentPoint = 0
+class AndrewDBSCAN:
+    # Initialize the DBSCAN object
+    def __init__(self, eps, minimalPts, metric=distance.euclidean):
+        self.eps = eps # eps -> radius of each point to find neighbors
+        self.minimalPts = minimalPts # minimalPts -> minimum number of points to form a cluster
+        self.metric = metric # metric -> distance metric to calculate distance between points
     
-    for i in range(0, X.shape[0]):
-        if clusters[i] != 0:
+    def fit_predict(self, data):
+        # create an array of zeros to store cluster labels
+        clusters = [0] * data.shape[0]
+        DBSCAN(data, clusters, self.eps, self.minimalPts, self.metric)
+        return clusters
+
+# DBSCAN algorithm
+def DBSCAN(data, clusters, eps, minimalPts, metric = distance.euclidean):
+    currentPointLabel = 0
+    
+    for point in range(0, data.shape[0]):
+        
+        # if point is already labeled,
+        if clusters[point] != 0: 
             continue
     
-        neighbors = neighborsGen(X, i, eps, metric)
+        # Find the neighbors of the current point
+        neighbors = neighborsFind(data, point, eps, metric)
 
-        if len(neighbors) < minPts:
-            clusters[i] = -1
+        # if point is noise
+        if len(neighbors) < minimalPts:
+            clusters[point] = -1
 
         else:
-            currentPoint += 1
-            expand(X, clusters, i, neighbors, currentPoint, eps, minPts, metric)
+            # keep expanding the cluster 
+            currentPointLabel += 1
+            expand(data, clusters, point, neighbors, currentPointLabel, eps, minimalPts, metric)
     
     return clusters
 
-
-def neighborsGen(X, point, eps, metric):
-    """
-    Generates neighborhood graph for a given point
-    """
-    
+# Find the neighbors of a given point
+def neighborsFind(data, point, eps, metric):
     neighbors = []
     
-    for i in range(X.shape[0]):
-        if metric(X[point], X[i]) < eps:
+    for i in range(data.shape[0]):
+        # If the distance to the point is less than eps, add it to the list of neighbors
+        if metric(data[point], data[i]) < eps:
             neighbors.append(i)
     
     return neighbors
 
-
-def expand(X, clusters, point, neighbors, currentPoint, eps, minPts, metric):
-    """
-    Expands cluster from a given point until neighborhood boundaries are reached
-    """
-    clusters[point] = currentPoint
+# This function expands the cluster from a given `point` until the boundaries of the neighborhood are reached. It assigns the `point` and all points in `neighbors` to the current cluster (`currentPointLabel`).
+def expand(data, clusters, point, neighbors, currentPointLabel, eps, minimalPts, metric):
+    clusters[point] = currentPointLabel
     
     i = 0
     while i < len(neighbors):
         
+        # Get the next neighbor
         nextPoint = neighbors[i]
         
-        if clusters[nextPoint] == -1:
-            clusters[nextPoint] = currentPoint
+        # It's still a the cluster point, if the NEXT neighbor is a noise, but no need to find the neighbors of the noise
+        if clusters[nextPoint] == -1: 
+            clusters[nextPoint] = currentPointLabel
         
+        # Assign the point to the cluster if it hasn't been assigned yet
         elif clusters[nextPoint] == 0:
-            clusters[nextPoint] = currentPoint
+            clusters[nextPoint] = currentPointLabel
             
-            nextNeighbors = neighborsGen(X, nextPoint, eps, metric)
+            nextNeighbors = neighborsFind(data, nextPoint, eps, metric)
             
-            if len(nextNeighbors) >= minPts:
+            # if the point is a core point, add its neighbors to the list of neighbors 
+            if len(nextNeighbors) >= minimalPts:
                 neighbors = neighbors + nextNeighbors
         
+        # Move to the next neighbor  
         i += 1
-        
-class AndrewDBSCAN:
-    """
-    Parameters:
-    
-    eps: Radius of neighborhood graph
-    
-    minPts: Number of neighbors required to label a given point as a core point.
-    
-    metric: Distance metric used to determine distance between points; 
-            currently accepts scipy.spatial.distance metrics for two numeric vectors
-    
-    """
-    
-    def __init__(self, eps, minPts, metric=distance.euclidean):
-        self.eps = eps
-        self.minPts = minPts
-        self.metric = metric
-    
-    def fit_predict(self, X):
-        """
-        Parameters:
-        
-        X: An n-dimensional array of numeric vectors to be analyzed
-        
-        Returns:
-        
-        [n] cluster labels
-        """
-    
-        clusters = [0] * X.shape[0]
-        
-        simple_DBSCAN(X, clusters, self.eps, self.minPts, self.metric)
-        
-        return clusters
-    
-
-# df = pd.read_csv('../Data/test_data.csv') # ~10% of the original dataset
-# cols = df.columns
-
-
-# X = df[[cols[0], cols[1]]]
-# X = StandardScaler().fit_transform(X)
-
-# clusters = scanner.fit_predict(X)

@@ -35,7 +35,7 @@ https://medium.com/@quangloctrandinh1998vn/hierarchical-clustering-python-from-s
 1. Read test and train data 
 2. Try Preprocessing
     - Drop columns with more than 90% zeros (Resulting in decrease a lot of accuracy)
-    - 
+    -   fill zero with knn (Resulting in decrease a lot of accuracy)
 3. Using Classification (分類) to clasify train data 
     - To Save each data probability in class A, B, C (Picture in 3 colors)
     
@@ -44,10 +44,28 @@ https://medium.com/@quangloctrandinh1998vn/hierarchical-clustering-python-from-s
     - Dispaly each data max probability in either class A, B or C 
 
 4. 處理 Unknown data 
-    -Unknown data 是 data that is below our setting threshould, in this code we use 0.75
+    - Unknown data 是 data that is below our setting threshould, in this code we use 0.75
 
     - 把 Unknown data 的label 變成 'Unknown' 
 
+5. DBScan 分群
+    - 使用 Bayesian Optimization 找出 最適合 的 eps & min points dbscan parameters 
+
     - 用 Dbscan分群 把 Unknown data 分群 
 
+    - After using dbscan clustering, it will divide the data into 2 clusters + noise data
 
+6. 處理 noise data 
+    - First, We train a classification model using the known data (all 5 classes excpet noise data)
+    - Then we predict the noise data, to see what classes it belong to
+
+
+
+
+
+
+To do 
+1. recording programmign Resulting
+2. changing dbscan code 
+3. finish programming logic 
+4. inget ganti variable name di dbsan 

@@ -72,8 +72,6 @@ classes = ['Dump', 'PRAD', 'COAD', 'Noise']
 # 2 different permuation possibilities
 newclasses = [['Dump', 'PRAD', 'COAD', 'Noise'], ['Dump', 'COAD', 'PRAD', 'Noise']]
 
-
-
 # Define the range of the hyperparameters
 pbounds = {'eps': (0.1, 200), 'minPts': (1, 20)}
 
@@ -107,7 +105,7 @@ epsilons = optimizer.max['params']['eps']
 minpoints = optimizer.max['params']['minPts']
 
 # Use DBSCAN clustering to cluster the unknown data
-dbscan_clustering = AndrewDBSCAN(eps=epsilons, minPts=minpoints)
+dbscan_clustering = AndrewDBSCAN(eps=epsilons, minimalPts=minpoints)
 clusters = dbscan_clustering.fit_predict(unknown_data.values)
 
 # print the count of -1, 1, 1 after clustering 
