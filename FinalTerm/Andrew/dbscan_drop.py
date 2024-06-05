@@ -125,8 +125,8 @@ def fill_zeros_with_knn(data, n_neighbors=2):
 
     return data_imputed_df
 
-# train_data = train_data.drop(columns=columns_to_drop)
-# test_data = test_data.drop(columns=columns_to_drop)
+train_data = train_data.drop(columns=columns_to_drop)
+test_data = test_data.drop(columns=columns_to_drop)
 
 # # # 填补训练数据中的0值
 # train_data = fill_zeros_with_knn(train_data)
