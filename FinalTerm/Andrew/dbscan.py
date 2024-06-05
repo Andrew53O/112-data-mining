@@ -1,65 +1,105 @@
 import numpy as np
 from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
+import pandas as pd
+import re
+import sys
+from contextlib import redirect_stdout
+import io
 
 # For Classification
 from sklearn.ensemble import RandomForestClassifier
 
-
 # For dbscan algorithm
-from dbscan_helper import *
+from scipy.spatial import distance
+
+# for finding the best hyperparameters
+from sklearn.metrics import silhouette_score
+from bayes_opt import BayesianOptimization
 
 
+class AndrewDBSCANwrapper:
+    # Initialize the DBSCAN object
+    def __init__(self, eps, minimalPts, metric = distance.euclidean):
+        self.eps = eps # eps -> radius of each point to find neighbors
+        self.minimalPts = minimalPts # minimalPts -> minimum number of points to form a cluster
+        self.metric = metric # metric -> distance metric to calculate distance between points
+    
+    def fit_predict(self, data):
+        # create an array of zeros to store cluster labels
+        clusters = [0] * data.shape[0]
+        DBSCAN(data, clusters, self.eps, self.minimalPts, self.metric)
+        return clusters
 
-# 加载训练集和测试集数据
+# DBSCAN algorithm
+def DBSCAN(data, clusters, eps, minimalPts, metric = distance.euclidean):
+    currentPointLabel = 0
+    
+    for point in range(0, data.shape[0]):
+        # if point is already labeled,
+        if clusters[point] != 0: 
+            continue
+    
+        # Find the neighbors of the current point
+        neighbors = neighborsFind(data, point, eps, metric)
+
+        # if point is noise
+        if len(neighbors) < minimalPts:
+            clusters[point] = -1
+
+        else:
+            # keep expanding the cluster 
+            currentPointLabel += 1
+            expandCluster(data, clusters, point, neighbors, currentPointLabel, eps, minimalPts, metric)
+    
+    return clusters
+
+# Find the neighbors of a given point
+def neighborsFind(data, point, eps, metric):
+    neighborsList = []
+    
+    for i in range(data.shape[0]):
+        # If the distance to the point is less than eps, add it to the list of neighbors
+        if metric(data[point], data[i]) < eps:
+            neighborsList.append(i)
+    
+    return neighborsList
+
+# This function expands the cluster from a given `point` until the boundaries of the neighborhood are reached. It assigns the `point` and all points in `neighbors` to the current cluster (`currentPointLabel`).
+def expandCluster(data, clusters, point, neighbors, currentPointLabel, eps, minimalPts, metric):
+    clusters[point] = currentPointLabel
+    
+    i = 0
+    while i < len(neighbors):
+        # Get the next neighbor
+        nextPoint = neighbors[i]
+        # It's still a the cluster point, if the NEXT neighbor is a noise, but no need to find the neighbors of the noise
+        if clusters[nextPoint] == -1: 
+            clusters[nextPoint] = currentPointLabel
+        
+        # Assign the point to the cluster if it hasn't been assigned yet
+        elif clusters[nextPoint] == 0:
+            clusters[nextPoint] = currentPointLabel
+            
+            nextNeighbrs = neighborsFind(data, nextPoint, eps, metric)
+            
+            # if the point is a core point, add its neighbors to the list of neighbors 
+            if len(nextNeighbrs) >= minimalPts:
+                neighbors = neighbors + nextNeighbrs
+        
+        # Move to the next neighbor  
+        i += 1
+
+# Load data
 train_data = pd.read_csv('../Data/train_data.csv', index_col='id')
 train_labels = pd.read_csv('../Data/train_label.csv', index_col='id')
 test_data = pd.read_csv('../Data/test_data.csv', index_col='id')
 test_labels = pd.read_csv('../Data/test_label.csv', index_col='id')
 
-def compute_distance(x1, x2):
-    return np.sqrt(np.sum((x1 - x2) ** 2))
-
-def fill_zeros_with_knn(data, n_neighbors=2):
-    # 记录哪些列是全零的
-    zero_cols = data.columns[(data == 0).all()]
-    non_zero_data = data.drop(columns=zero_cols)
-    
-    imputer = KNNImputer(n_neighbors=n_neighbors, missing_values=0)
-    data_imputed = imputer.fit_transform(non_zero_data)
-    
-    # 将填补后的数据转换回 DataFrame
-    data_imputed_df = pd.DataFrame(data_imputed, columns=non_zero_data.columns, index=data.index)
-    
-    # 创建一个全零的 DataFrame
-    zero_cols_df = pd.DataFrame(0, index=data.index, columns=zero_cols)
-    
-    # 将全零的列加回去
-    data_imputed_df = pd.concat([data_imputed_df, zero_cols_df], axis=1)
-    
-    # 按照原始列的顺序重新排序
-    data_imputed_df = data_imputed_df.reindex(columns=data.columns)
-    
-    return data_imputed_df
-
-# # 填补训练数据中的0值
-# train_data = fill_zeros_with_knn(train_data)
-
-# #填补测试数据中的0值
-# test_data = fill_zeros_with_knn(test_data)
-
-
-
-
-
-
-# 使用随机森林分类器对所有样本进行分类
+# Using RandomForestClassifier classifier, train the model using train data and predict the test
 classifier = RandomForestClassifier(n_estimators=100, random_state=42)
 classifier.fit(train_data, train_labels.values.ravel()) # Convert labels into 1D array
 test_predictions_proba = classifier.predict_proba(test_data) # Predict each data belongs to what class label
-
-# Assuming test_predictions_proba is a 2D array
-# and you have two classes
 
 # Get the probabilities of the first class
 class1_probabilities = test_predictions_proba[:, 0]
@@ -71,158 +111,133 @@ plt.hist(class1_probabilities, bins=10, alpha=0.5, label='Class 1')
 plt.hist(class2_probabilities, bins=10, alpha=0.5, label='Class 2')
 plt.hist(class3_probabilities, bins=10, alpha=0.5, label='Class 3')
 
-
 plt.title('Distribution Probabilities of 3 known classes')
 plt.xlabel('Probability')
 plt.ylabel('Frequency')
 plt.legend(loc='upper right')
 
-# plt.savefig('All3Class.jpg', format='jpg', dpi=600)
-# plt.show()
+# plt.savefig('All3Class.jpg', format='jpg', dpi=600) # save the plot
+# plt.show() # show the plot 
 
 # Find the maximum value of each row
 max_values = np.max(test_predictions_proba, axis=1) # row-wise
-# plot 
 plt.hist(max_values, bins=10, alpha=0.5, label='Classes')
-
 plt.title('Distribution Probabilities of max 3 known classes')
 plt.xlabel('Probability')
 plt.ylabel('Frequency')
 plt.legend(loc='upper right')
 
-# plt.savefig('Max3Class.jpg', format='jpg', dpi=600)
-# plt.show()
+# plt.savefig('Max3Class.jpg', format='jpg', dpi=600) # save the plot
+# plt.show()  # show the plot 
 
-# Find the best value of threshold interms of accuracy
-#thresholds = np.arange(0.51, 0.85, 0.02).tolist()
-thresholds = [0.75]
+# Settings for the threshold, we found 0.75 is the best threshold after trying different values
+threshold = [0.75]
+
+# Find the indices of the rows that have maximum value less than threshold
+unknown_indices = np.where(np.max(test_predictions_proba, axis=1) < threshold[0])[0]
+test_predictions = classifier.predict(test_data) # Using test data to predict  
+test_predictions[unknown_indices] = 'Unknown' # set the index of unknown_indices to 'Unknown'
+
+# Extract the unknown data
+unknown_data = test_data.iloc[unknown_indices]
+
+# 4 classes: Dummy, PRAD, COAD, Noise
+# Dbscan will return -1 for the noise data
+# Dbscan will not return 0, so index 0 is for "dump"
+# return 1 for the first class, 2 for the second class
+classes = ['Dump', 'PRAD', 'COAD', 'Noise']
+# 2 different permuation possibilities
+newclasses = [['Dump', 'PRAD', 'COAD', 'Noise'], ['Dump', 'COAD', 'PRAD', 'Noise']]
+
+# Define the range of the hyperparameters
+pbounds = {'eps': (0.1, 200), 'minPts': (1, 20)}
+
+# Define the function to optimize
+def dbscan_func(eps, minPts):
+    minPts = int(minPts)
+    dbscan = AndrewDBSCANwrapper(eps=eps, minimalPts=minPts) # call our dbscan clustering
+    clusters = dbscan.fit_predict(unknown_data.values)
+    # Check if more than one cluster is formed
+    if len(set(clusters)) > 1:
+        score = silhouette_score(unknown_data.values, clusters)
+    else:
+        score = -1  # return a low score
+    return score
+
+# Initialize the optimizer we use BayesianOptimization
+optimizer = BayesianOptimization(
+    f=dbscan_func,
+    pbounds=pbounds,
+    random_state=1,
+)
+
+# Create a string buffer to capture the output
+buffer = io.StringIO()
+
+# Perform optimization
+with redirect_stdout(buffer):
+    optimizer.maximize(
+        init_points=2, # perform 2 random steps before starting bayesian optimization
+        n_iter=5, # perform 3 steps of bayesian optimization 
+    )
+
+
+# Function to strip ANSI codes
+def strip_ansi_codes(text):
+    ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', text)
+
+# Get the output and strip ANSI codes
+output = strip_ansi_codes(buffer.getvalue())
+print(output) # output after process the ansi code
+
+# # Best epsilons and minpoints
+epsilons = optimizer.max['params']['eps']
+minpoints = optimizer.max['params']['minPts']
+
+# Use DBSCAN clustering to cluster the unknown data
+dbscan_clustering = AndrewDBSCANwrapper(eps=epsilons, minimalPts=minpoints)
+clusters = dbscan_clustering.fit_predict(unknown_data.values)
+
+# print the count of -1, 1, 1 after clustering 
+num_minus_one = clusters.count(-1)
+print("-1:", num_minus_one)
+num_ones = clusters.count(1)
+print("1:", num_ones)         
+num_zero = clusters.count(2)
+print("2:", num_zero)
+        
 
 max_accuracy = 0
-max_threshold = 0
-max_eps = 0
-max_minPts = 0
-for threshold in thresholds:
+for classesis in newclasses: # for finding the best permutation of classes
+    # Get the number of clusters 
+    n_clusters = len(set(clusters)) - (1 if -1 in clusters else 0)
+    if n_clusters <= 2:
+        # Assign the label to the unknown data
+        test_predictions[unknown_indices] = [classesis[int(label)] for label in clusters]
+
+    # Handle the noise data
+    noise_indices = np.where(np.array(test_predictions) == 'Noise')[0]
+    if(noise_indices.size > 0): # if there is noise data
+        noise_data = test_data.iloc[noise_indices]
+        # Get the All Known data (All 5 class)
+        known_indices = np.where(np.array(test_predictions) != 'Noise')[0]
+        known_data = test_data.iloc[known_indices]
+        known_label = test_predictions[known_indices]
+
+        # Using classification to classify uknown data after clustering 
+        classifier_noise = RandomForestClassifier(n_estimators=100, random_state=42)
+        classifier_noise.fit(known_data, known_label) 
+        classifier_noise_predictions = classifier_noise.predict(noise_data)
     
-    # Find the indices of the rows that have maximum value less than threshold
-    unknown_indices = np.where(np.max(test_predictions_proba, axis=1) < threshold)[0]
-    test_predictions = classifier.predict(test_data) # Using test data to predict  
-    #print(test_predictions)
-    test_predictions[unknown_indices] = 'Unknown' # set the index of unknown_indices to 'Unknown'
-
-    # Extract the unknown data
-    unknown_data = test_data.iloc[unknown_indices]
-
-    # New cluster possiblities name 
-    # possibilities = [['COAD', 'PRAD'], ['PRAD', 'COAD']]
-
-    # 将新增的两个类别名称添加到原有的类别列表中
-    #classes = np.append(train_labels['Class'].unique(), ['PRAD', 'COAD'])
-    #classes = ['PRAD', 'COAD']
-    classes = ['Dummy', 'PRAD', 'COAD', 'Noise']
-    print(classes[-1])
-    #epsilons = np.arange(0.2, 0.6, 0.1).tolist()
-    # epsilons = np.arange(180, 185, 1).tolist()
-    #epsilons = [182]
-    epsilons = [192]
-    #minpoints = np.arange(5, 25, 1).tolist()
-    # minpoints = np.arange(50, 61, 1).tolist()
-    #minpoints = [52]
-    minpoints = [12]
-    
-    for eps in epsilons:
-        for minPts in minpoints:
-            # 使用K均值聚类对未知类别中的样本进行分组
-            test_predictions[unknown_indices] = 'Unknown'
-            #if not unknown_data.empty:
-                # kmeans = MyKMeans(n_clusters=len(classes), random_state=42)
-            #dbscan_clustering = DBSCAN(eps=eps, min_samples=minPts)
-            dbscan_clustering = Basic_DBSCAN(eps=eps, minPts=minPts)
-            clusters = dbscan_clustering.fit_predict(unknown_data.values)
-            #print(clusters)
-            n_clusters = len(set(clusters)) - (1 if -1 in clusters else 0)
-            if n_clusters <= 2:
-                print(clusters)
-                num_minus_one = clusters.count(-1)
-                print("-1:", num_minus_one)
-                num_ones = clusters.count(1)
-                print("1:", num_ones)         
-                num_zero = clusters.count(2)
-                print("2:", num_zero)
-                
-                print(clusters)
-                print(f"eps={eps}, min_samples={minPts} gives {n_clusters} clusters")
-                # assign the label to the unknown data
-                try:
-                    test_predictions[unknown_indices] = [classes[int(label)] for label in clusters]
-                    unknown_data_label = [classes[int(label)] for label in clusters]
-                except IndexError as e:
-                    print(clusters)
-                    print("Error happends", e)
-                    break
-            
-            # Handle the noise data
-            noise_indices = np.where(test_predictions[unknown_indices] == 'Noise')[0]
-            noise_data = unknown_data.iloc[noise_indices]
-            
-            # Using classification to classify the clustered data 
-            classifier_noise = RandomForestClassifier(n_estimators=100, random_state=42)
-            classifier_noise.fit(unknown_data, unknown_data_label) 
-            print("unknown_data", unknown_data)
-            print(unknown_data_label)
-            print("noise data", noise_data)
-            classifier_noise_predictions = classifier_noise.predict(noise_data)
-            print("classifer noise predictions", classifier_noise_predictions)
-            
-            
-            
-            test_labels_array = test_labels.values.ravel() # Convert the test_labels into 1D array
-            local_accuracy = np.mean(test_predictions == test_labels_array)
-            print(eps, minPts, local_accuracy)
-               
-            accuracy = max(local_accuracy, max_accuracy)
-            if (accuracy > max_accuracy):
-                max_accuracy = accuracy
-                max_threshold = threshold
-                max_eps = eps
-                max_minPts = minPts
-                print(eps, minPts, "Max ", accuracy)
-                print(clusters)
-                
-          
-                    
+    # Assign the result to the overall test predictions
+    test_predictions[noise_indices] = classifier_noise_predictions
+    test_labels_array = test_labels.values.ravel() # Convert the test_labels into 1D array
+    local_accuracy = np.mean(test_predictions == test_labels_array)
+    if (local_accuracy > max_accuracy): 
+        max_accuracy = local_accuracy
         
-    # 输出结果
-    #print("預測結果：")
-    # print(test_predictions)
-
-    # Calculate the accuracy
-    
-    print(threshold)
-    #print("\預測正確率：", accuracy)
-
-print("\預測正確率：", max_accuracy)
-print("\最佳閾值：", max_threshold)
-print("\最佳eps：", max_eps)
-print("\最佳minPts：", max_minPts)
-# cari tau gimana buat border di blocknya itu biar lebih bagus kli 
-# masukin code dari medium buat yg dbscan 
-# liat accuracnya 
-
-# apa sih unknown_data.values ama unknown_predictions
-
-
-# kata yulin
-# 1. cuman perlu ngeclustering 2 data unknowin itu aja 
-
-# problem
-# 1. accuracy nya masih rendah, bingung tanya yulin
-# epsilon ama min pointnya ancur
-
-
-# \預測正確率： 0.9668674698795181
-# \最佳閾值： 0.75
-# \最佳eps： 200
-# \最佳minPts： 2
-
-
-# dpt ini apakah ga kettingian tuh?
+# Print the test labels and test predictions
+print("Test Labels     : ", ' '.join(map(str, test_labels_array)))
+print("Test Predictions: ", ' '.join(map(str, test_predictions.ravel())))
+print("\n預測正確率：", max_accuracy)
