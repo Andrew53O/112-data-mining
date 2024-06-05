@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # For Classification
 from sklearn.ensemble import RandomForestClassifier
@@ -78,7 +79,7 @@ pbounds = {'eps': (0.1, 200), 'minPts': (1, 20)}
 # Define the function to optimize
 def dbscan_func(eps, minPts):
     minPts = int(minPts)
-    dbscan = AndrewDBSCAN(eps=eps, minPts=minPts) # call our dbscan clustering
+    dbscan = AndrewDBSCAN(eps=eps, minimalPts=minPts) # call our dbscan clustering
     clusters = dbscan.fit_predict(unknown_data.values)
     # Check if more than one cluster is formed
     if len(set(clusters)) > 1:
