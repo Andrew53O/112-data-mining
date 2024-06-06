@@ -63,9 +63,9 @@ https://medium.com/@quangloctrandinh1998vn/hierarchical-clustering-python-from-s
 
 
 
+# Bayesian Optimization
+Silhouette score, which measures how similar an object is to its own cluster compared to other clusters.
 
-To do 
-1. recording programmign Resulting
-2. changing dbscan code ✔
-3. finish programming logic ✔
-4. inget ganti variable name di dbsan 
+In the context of using Bayesian optimization to tune the hyperparameters of the DBSCAN clustering algorithm, the value 0.3463 represents the best score of the objective function that you are trying to optimize. The exact meaning of this score depends on how you have defined your objective function for evaluating the quality of the clustering. Here are a few common scenarios:
+
+Silhouette Score: If your objective function is the silhouette score, then 0.3463 represents the highest silhouette score achieved during the optimization process. The silhouette score measures how similar an object is to its own cluster compared to other clusters. Values range from -1 to 1, with higher values indicating better-defined clusters.
